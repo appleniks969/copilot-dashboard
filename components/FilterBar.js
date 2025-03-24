@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flex, Select, Input, Button, FormControl, FormLabel, Stack } from '@chakra-ui/react';
+import { Flex, Select, Input, Button, FormControl, FormLabel, Stack, Text } from '@chakra-ui/react';
 import { DATE_RANGES } from '../lib/config';
 import { useCopilot } from '../lib/CopilotContext';
 
@@ -46,12 +46,17 @@ const FilterBar = () => {
         </FormControl>
         
         <FormControl>
-          <FormLabel>Team</FormLabel>
+          <FormLabel fontWeight="bold">Team (Preferred View)</FormLabel>
           <Input 
             value={team} 
             onChange={(e) => setTeam(e.target.value)}
             placeholder="Enter GitHub team slug"
+            borderColor="blue.300"
+            _focus={{ borderColor: "blue.500" }}
           />
+          <Text fontSize="xs" color="gray.600" mt={1}>
+            When team is specified, team data will be shown. Leave empty for organization view.
+          </Text>
         </FormControl>
         
         <FormControl>

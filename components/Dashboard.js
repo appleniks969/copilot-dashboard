@@ -9,7 +9,7 @@ import TeamComparisonReport from './reports/TeamComparisonReport';
 import { useCopilot } from '../lib/CopilotContext';
 
 const Dashboard = () => {
-  const { isLoading, error, organization, dateRange, authToken, updateAuthToken } = useCopilot();
+  const { isLoading, error, organization, team, dateRange, authToken, updateAuthToken } = useCopilot();
   
   // Handle logout
   const handleLogout = () => {
@@ -27,7 +27,11 @@ const Dashboard = () => {
         <Box>
           <Heading>GitHub Copilot Dashboard</Heading>
           <Text color="gray.600">
-            Organization: {organization} | Timeframe: Last {dateRange} days
+            {team ? (
+              <>Team: <strong>{team}</strong> | Organization: {organization} | Timeframe: Last {dateRange} days</>
+            ) : (
+              <>Organization: <strong>{organization}</strong> | Timeframe: Last {dateRange} days</>
+            )}
           </Text>
         </Box>
         <Button colorScheme="red" variant="outline" onClick={handleLogout}>
