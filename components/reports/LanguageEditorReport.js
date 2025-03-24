@@ -31,46 +31,54 @@ import { CHART_COLORS, PROGRAMMING_LANGUAGES, EDITORS } from '../../lib/config';
 import { formatNumber, formatPercentage, transformDataForCharts } from '../../lib/utils';
 
 const LanguageEditorReport = () => {
-  const { orgData } = useCopilot();
+  const { orgData, metrics } = useCopilot();
   
-  if (!orgData) {
+  if (!orgData || !metrics) {
     return (
       <Box p={4}>
-        <Text>No data available. Please make sure you're authenticated and have selected a valid organization.</Text>
+        <Text>No data available. Please make sure you're authenticated and have selected a valid organization and team.</Text>
       </Box>
     );
   }
 
-  // Mock data for language usage since the API doesn't provide this directly
-  // In a real implementation, this would come from the API
-  const mockLanguageData = [
-    { name: 'JavaScript', value: 3500, acceptanceRate: 78 },
-    { name: 'Python', value: 2800, acceptanceRate: 82 },
-    { name: 'TypeScript', value: 2200, acceptanceRate: 76 },
-    { name: 'Java', value: 1800, acceptanceRate: 71 },
-    { name: 'Go', value: 1200, acceptanceRate: 75 },
-    { name: 'Ruby', value: 900, acceptanceRate: 69 },
-    { name: 'C#', value: 850, acceptanceRate: 73 },
-    { name: 'PHP', value: 620, acceptanceRate: 65 },
-    { name: 'Other', value: 1500, acceptanceRate: 70 },
-  ];
+  // Get language data from the API response
+  const languageData = metrics.languages && metrics.languages.length > 0
+    ? metrics.languages.map(lang => ({
+        name: lang.name,
+        value: lang.total_suggestions || 0,
+        acceptanceRate: lang.total_suggestions > 0 
+          ? (lang.total_acceptances / lang.total_suggestions) * 100 
+          : 0
+      }))
+    : [];
 
-  // Mock data for editor usage
-  const mockEditorData = [
-    { name: 'VS Code', value: 8500, acceptanceRate: 77 },
-    { name: 'JetBrains', value: 3200, acceptanceRate: 75 },
-    { name: 'Visual Studio', value: 1200, acceptanceRate: 72 },
-    { name: 'Vim/Neovim', value: 380, acceptanceRate: 69 },
-    { name: 'Other', value: 300, acceptanceRate: 65 },
-  ];
+  // Get editor data from the API response
+  const editorData = metrics.editors && metrics.editors.length > 0
+    ? metrics.editors.map(editor => ({
+        name: editor.name,
+        value: editor.total_suggestions || 0,
+        acceptanceRate: editor.total_suggestions > 0 
+          ? (editor.total_acceptances / editor.total_suggestions) * 100 
+          : 0
+      }))
+    : [];
+
+  // If we don't have data yet, provide a message
+  if (languageData.length === 0 && editorData.length === 0) {
+    return (
+      <Box p={4}>
+        <Text>No language or editor data available in the current metrics. Try a different date range or team.</Text>
+      </Box>
+    );
+  }
 
   // Prepare simplified data for the pie charts
-  const pieLanguageData = mockLanguageData.slice(0, 5).map(item => ({
+  const pieLanguageData = languageData.slice(0, 5).map(item => ({
     name: item.name,
     value: item.value,
   }));
 
-  const pieEditorData = mockEditorData.map(item => ({
+  const pieEditorData = editorData.map(item => ({
     name: item.name,
     value: item.value,
   }));
@@ -161,13 +169,19 @@ const LanguageEditorReport = () => {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {mockLanguageData.map((lang) => (
-                    <Tr key={lang.name}>
-                      <Td>{lang.name}</Td>
-                      <Td isNumeric>{formatNumber(lang.value)}</Td>
-                      <Td isNumeric>{formatPercentage(lang.acceptanceRate)}</Td>
+                  {languageData.length > 0 ? (
+                    languageData.map((lang) => (
+                      <Tr key={lang.name}>
+                        <Td>{lang.name}</Td>
+                        <Td isNumeric>{formatNumber(lang.value)}</Td>
+                        <Td isNumeric>{formatPercentage(lang.acceptanceRate)}</Td>
+                      </Tr>
+                    ))
+                  ) : (
+                    <Tr>
+                      <Td colSpan={3} textAlign="center">No language data available</Td>
                     </Tr>
-                  ))}
+                  )}
                 </Tbody>
               </Table>
             </Box>
@@ -187,13 +201,19 @@ const LanguageEditorReport = () => {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {mockEditorData.map((editor) => (
-                    <Tr key={editor.name}>
-                      <Td>{editor.name}</Td>
-                      <Td isNumeric>{formatNumber(editor.value)}</Td>
-                      <Td isNumeric>{formatPercentage(editor.acceptanceRate)}</Td>
+                  {editorData.length > 0 ? (
+                    editorData.map((editor) => (
+                      <Tr key={editor.name}>
+                        <Td>{editor.name}</Td>
+                        <Td isNumeric>{formatNumber(editor.value)}</Td>
+                        <Td isNumeric>{formatPercentage(editor.acceptanceRate)}</Td>
+                      </Tr>
+                    ))
+                  ) : (
+                    <Tr>
+                      <Td colSpan={3} textAlign="center">No editor data available</Td>
                     </Tr>
-                  ))}
+                  )}
                 </Tbody>
               </Table>
             </Box>

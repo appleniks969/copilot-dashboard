@@ -47,15 +47,11 @@ const FilterBar = () => {
         
         <FormControl>
           <FormLabel>Team</FormLabel>
-          <Select 
+          <Input 
             value={team} 
             onChange={(e) => setTeam(e.target.value)}
-          >
-            <option value="">All Teams</option>
-            {teamOptions.map(teamName => (
-              <option key={teamName} value={teamName}>{teamName}</option>
-            ))}
-          </Select>
+            placeholder="Enter GitHub team slug"
+          />
         </FormControl>
         
         <FormControl>
