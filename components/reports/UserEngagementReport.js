@@ -27,18 +27,29 @@ import { CHART_COLORS } from '../../lib/config';
 import { formatNumber, formatPercentage, transformDataForCharts } from '../../lib/utils';
 
 const UserEngagementReport = () => {
-  const { orgData, teamData, metrics, dateRange } = useCopilot();
+  const { metrics, dateRange } = useCopilot();
   
-  if (!orgData || !metrics) {
+  if (!metrics) {
     return (
       <Box p={4}>
-        <Text>No data available. Please make sure you're authenticated and have selected a valid organization.</Text>
+        <Text>No data available. Please make sure you're authenticated and have selected a valid organization and team.</Text>
       </Box>
     );
   }
 
-  const engagementData = transformDataForCharts(orgData, 'userEngagement');
-  const acceptanceData = transformDataForCharts(orgData, 'acceptanceRate');
+  // Create data for user engagement chart
+  const engagementData = [
+    { name: 'Active Users', value: metrics.totalActiveUsers || 0 },
+    { name: 'Engaged Users', value: metrics.totalEngagedUsers || 0 },
+    { name: 'Accepted Suggestions', value: metrics.acceptedSuggestions || 0 },
+    { name: 'Total Suggestions', value: metrics.totalSuggestions || 0 },
+  ];
+
+  // Create data for acceptance rate pie chart
+  const acceptanceData = [
+    { name: 'Accepted', value: metrics.acceptedSuggestions || 0 },
+    { name: 'Not Accepted', value: (metrics.totalSuggestions || 0) - (metrics.acceptedSuggestions || 0) },
+  ];
   
   return (
     <Box>

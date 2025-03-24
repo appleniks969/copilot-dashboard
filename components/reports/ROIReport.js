@@ -34,12 +34,12 @@ import { CHART_COLORS, ROI_DEFAULTS } from '../../lib/config';
 import { formatNumber, formatPercentage, formatCurrency } from '../../lib/utils';
 
 const ROIReport = () => {
-  const { orgData, metrics, totalLicensedUsers, dateRange } = useCopilot();
+  const { metrics, totalLicensedUsers, dateRange } = useCopilot();
   
-  if (!orgData || !metrics) {
+  if (!metrics || !metrics.roi) {
     return (
       <Box p={4}>
-        <Text>No data available. Please make sure you're authenticated and have selected a valid organization.</Text>
+        <Text>No ROI data available. Please make sure you're authenticated and have selected a valid organization and team.</Text>
       </Box>
     );
   }
