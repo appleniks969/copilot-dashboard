@@ -18,6 +18,19 @@ import {
   Tr,
   Th,
   Td,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab, 
+  TabPanel,
+  Stat,
+  StatLabel, 
+  StatNumber, 
+  StatHelpText,
+  Badge,
+  Flex,
+  SimpleGrid,
+  Divider
 } from '@chakra-ui/react';
 import { 
   BarChart, 
@@ -28,22 +41,373 @@ import {
   Tooltip, 
   Legend,
   ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 import ChartCard from '../ChartCard';
+import StatCard from '../StatCard';
 import { useCopilot } from '../../lib/CopilotContext';
-import { CHART_COLORS } from '../../lib/config';
-import { formatNumber, formatPercentage } from '../../lib/utils';
+import { CHART_COLORS, TEAMS_LIST } from '../../lib/config';
+import { formatNumber, formatPercentage, formatCurrency } from '../../lib/utils';
 
 const TeamComparisonReport = () => {
-  const { team, orgData, metrics } = useCopilot();
+  const { team, orgData, metrics, multiTeamData, dateRange } = useCopilot();
   
-  // Check if we have language and editor data available
+  // Always show team comparison view if we have multi-team data
+  const hasMultiTeamData = multiTeamData && multiTeamData.length > 0;
+  
+  // For single team view (fallback)
   const hasLanguageComparison = orgData && orgData.languages && orgData.languages.length > 0;
   const hasEditorComparison = orgData && orgData.editors && orgData.editors.length > 0;
   
-  // Set the report title based on whether we're viewing team or org data
-  const reportTitle = team ? `Team Usage Report: ${team}` : "Organization Usage Breakdown";
+  // Set the report title
+  const reportTitle = hasMultiTeamData 
+    ? "Teams Comparison Report" 
+    : (team ? `Team Usage Report: ${team}` : "Organization Usage Breakdown");
   
+  // If we have multi-team data, create charts for team comparison
+  if (hasMultiTeamData) {
+    // Prepare data for charts
+    const teamSuggestionData = multiTeamData.map(teamData => ({
+      name: teamData.team_slug,
+      totalSuggestions: teamData.total_suggestions || 0,
+      acceptedSuggestions: teamData.accepted_suggestions || 0,
+      acceptanceRate: teamData.total_suggestions > 0 
+        ? (teamData.accepted_suggestions / teamData.total_suggestions) * 100
+        : 0,
+      acceptedLines: teamData.accepted_lines || 0
+    })).sort((a, b) => b.acceptedSuggestions - a.acceptedSuggestions);
+    
+    // For active users comparison
+    const activeUsersData = multiTeamData.map(teamData => ({
+      name: teamData.team_slug,
+      activeUsers: teamData.active_users || 0,
+      engagedUsers: teamData.engaged_users || 0
+    })).sort((a, b) => b.activeUsers - a.activeUsers);
+    
+    // Top teams by acceptance rate
+    const acceptanceRateData = [...teamSuggestionData]
+      .sort((a, b) => b.acceptanceRate - a.acceptanceRate);
+    
+    // Languages data across teams
+    const allLanguages = {};
+    multiTeamData.forEach(teamData => {
+      if (teamData.languages && teamData.languages.length > 0) {
+        teamData.languages.forEach(lang => {
+          if (!allLanguages[lang.name]) {
+            allLanguages[lang.name] = {
+              name: lang.name,
+              totalAccepted: 0,
+              teams: 0
+            };
+          }
+          allLanguages[lang.name].totalAccepted += (lang.total_acceptances || 0);
+          allLanguages[lang.name].teams++;
+        });
+      }
+    });
+    
+    const languagesData = Object.values(allLanguages)
+      .sort((a, b) => b.totalAccepted - a.totalAccepted)
+      .slice(0, 5); // Top 5 languages
+    
+    return (
+      <Box>
+        <Heading size="lg" mb={3}>{reportTitle}</Heading>
+        <Text mb={6}>This report compares GitHub Copilot usage metrics across different teams in your organization.</Text>
+        
+        <SimpleGrid columns={{ base: 1, lg: 3 }} spacing={6} mb={6}>
+          <StatCard
+            title="Teams Analyzed"
+            value={multiTeamData.length}
+            helpText={`Data from the last ${dateRange}`}
+            infoTooltip={`This dashboard is showing data for the following teams: ${multiTeamData.map(t => t.team_slug).join(", ")}`}
+          />
+          <StatCard
+            title="Total Active Users"
+            value={formatNumber(multiTeamData.reduce((sum, team) => sum + (team.active_users || 0), 0))}
+            helpText="Across all analyzed teams"
+            infoTooltip="Active users are those who have used GitHub Copilot at least once during the selected time period"
+          />
+          <StatCard
+            title="Total Accepted Suggestions"
+            value={formatNumber(multiTeamData.reduce((sum, team) => sum + (team.accepted_suggestions || 0), 0))}
+            helpText="Across all analyzed teams"
+            infoTooltip="The total number of code suggestions that were accepted by all users across the analyzed teams"
+          />
+        </SimpleGrid>
+        
+        <Tabs colorScheme="blue" mb={6} isLazy>
+          <TabList>
+            <Tab>Team Metrics</Tab>
+            <Tab>Suggestion Data</Tab>
+            <Tab>Languages & Editors</Tab>
+          </TabList>
+          
+          <TabPanels>
+            {/* Team Metrics Tab */}
+            <TabPanel p={0} pt={4}>
+              <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6} mb={6}>
+                <GridItem>
+                  <ChartCard
+                    title="Teams by Active Users"
+                    description="Number of active users per team"
+                    infoTooltip="Active users are those who have used GitHub Copilot at least once during the selected time period"
+                  >
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={activeUsersData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => formatNumber(value)} />
+                        <Legend />
+                        <Bar dataKey="activeUsers" fill={CHART_COLORS.primary} name="Active Users" />
+                        <Bar dataKey="engagedUsers" fill={CHART_COLORS.secondary} name="Engaged Users" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartCard>
+                </GridItem>
+                
+                <GridItem>
+                  <ChartCard
+                    title="Teams by Acceptance Rate"
+                    description="Percentage of suggestions accepted by each team"
+                    infoTooltip="Acceptance rate represents the percentage of GitHub Copilot suggestions that were accepted by developers on each team"
+                  >
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={acceptanceRateData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                        <Tooltip formatter={(value) => `${value.toFixed(2)}%`} />
+                        <Legend />
+                        <Bar dataKey="acceptanceRate" fill={CHART_COLORS.tertiary} name="Acceptance Rate" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartCard>
+                </GridItem>
+              </Grid>
+              
+              <Box p={5} shadow="md" borderWidth="1px" borderRadius="lg" bg="white" overflowX="auto">
+                <Heading size="md" mb={4}>Team Performance Metrics</Heading>
+                <Table variant="simple">
+                  <Thead>
+                    <Tr>
+                      <Th>Team</Th>
+                      <Th isNumeric>Active Users</Th>
+                      <Th isNumeric>Engaged Users</Th>
+                      <Th isNumeric>Acceptance Rate</Th>
+                      <Th isNumeric>Accepted Lines</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {multiTeamData.map((teamData) => (
+                      <Tr key={teamData.team_slug}>
+                        <Td fontWeight="bold">{teamData.team_slug}</Td>
+                        <Td isNumeric>{formatNumber(teamData.active_users || 0)}</Td>
+                        <Td isNumeric>{formatNumber(teamData.engaged_users || 0)}</Td>
+                        <Td isNumeric>
+                          {formatPercentage(
+                            teamData.total_suggestions > 0
+                              ? (teamData.accepted_suggestions / teamData.total_suggestions) * 100
+                              : 0
+                          )}
+                        </Td>
+                        <Td isNumeric>{formatNumber(teamData.accepted_lines || 0)}</Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </Box>
+            </TabPanel>
+            
+            {/* Suggestion Data Tab */}
+            <TabPanel p={0} pt={4}>
+              <Grid templateColumns={{ base: "1fr", lg: "1fr" }} gap={6} mb={6}>
+                <GridItem>
+                  <ChartCard
+                    title="Teams by Copilot Suggestions"
+                    description="Total and accepted suggestions per team"
+                    infoTooltip="This chart compares the volume of GitHub Copilot suggestions across teams and shows what percentage of those suggestions were accepted"
+                  >
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={teamSuggestionData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => formatNumber(value)} />
+                        <Legend />
+                        <Bar dataKey="acceptedSuggestions" fill={CHART_COLORS.primary} name="Accepted Suggestions" />
+                        <Bar dataKey="totalSuggestions" fill={CHART_COLORS.quaternary} name="Total Suggestions" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartCard>
+                </GridItem>
+              </Grid>
+              
+              <Grid templateColumns={{ base: "1fr", lg: "1fr" }} gap={6} mb={6}>
+                <GridItem>
+                  <ChartCard
+                    title="Teams by Accepted Lines of Code"
+                    description="Lines of code accepted from Copilot suggestions"
+                    infoTooltip="This chart shows the total number of lines of code from GitHub Copilot that were accepted by each team"
+                  >
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={teamSuggestionData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => formatNumber(value)} />
+                        <Legend />
+                        <Bar dataKey="acceptedLines" fill={CHART_COLORS.secondary} name="Accepted Lines of Code" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartCard>
+                </GridItem>
+              </Grid>
+              
+              <Box p={5} shadow="md" borderWidth="1px" borderRadius="lg" bg="white" overflowX="auto">
+                <Heading size="md" mb={4}>Suggestion Metrics by Team</Heading>
+                <Table variant="simple">
+                  <Thead>
+                    <Tr>
+                      <Th>Team</Th>
+                      <Th isNumeric>Total Suggestions</Th>
+                      <Th isNumeric>Accepted Suggestions</Th>
+                      <Th isNumeric>Acceptance Rate</Th>
+                      <Th isNumeric>Accepted Lines</Th>
+                      <Th isNumeric>Avg. Lines per Suggestion</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {multiTeamData.map((teamData) => (
+                      <Tr key={teamData.team_slug}>
+                        <Td fontWeight="bold">{teamData.team_slug}</Td>
+                        <Td isNumeric>{formatNumber(teamData.total_suggestions || 0)}</Td>
+                        <Td isNumeric>{formatNumber(teamData.accepted_suggestions || 0)}</Td>
+                        <Td isNumeric>
+                          {formatPercentage(
+                            teamData.total_suggestions > 0
+                              ? (teamData.accepted_suggestions / teamData.total_suggestions) * 100
+                              : 0
+                          )}
+                        </Td>
+                        <Td isNumeric>{formatNumber(teamData.accepted_lines || 0)}</Td>
+                        <Td isNumeric>
+                          {teamData.accepted_suggestions > 0
+                            ? (teamData.accepted_lines / teamData.accepted_suggestions).toFixed(2)
+                            : "0.00"}
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </Box>
+            </TabPanel>
+            
+            {/* Languages & Editors Tab */}
+            <TabPanel p={0} pt={4}>
+              <Grid templateColumns={{ base: "1fr", lg: "1fr" }} gap={6} mb={6}>
+                <GridItem>
+                  <ChartCard
+                    title="Top Languages Across Teams"
+                    description="Most used programming languages with Copilot"
+                    infoTooltip="This chart shows the programming languages most commonly used with GitHub Copilot across all teams"
+                  >
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={languagesData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => formatNumber(value)} />
+                        <Legend />
+                        <Bar dataKey="totalAccepted" fill={CHART_COLORS.primary} name="Accepted Suggestions" />
+                        <Bar dataKey="teams" fill={CHART_COLORS.tertiary} name="Number of Teams" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartCard>
+                </GridItem>
+              </Grid>
+              
+              <Box p={5} shadow="md" borderWidth="1px" borderRadius="lg" bg="white">
+                <Heading size="md" mb={4}>Language and Editor Usage by Team</Heading>
+                <Text mb={4}>Top languages and editors for each team based on accepted suggestions.</Text>
+                
+                <Divider mb={4} />
+                
+                {multiTeamData.map((teamData) => (
+                  <Box key={teamData.team_slug} mb={6}>
+                    <Heading size="sm" mb={2}>{teamData.team_slug}</Heading>
+                    
+                    {teamData.languages && teamData.languages.length > 0 ? (
+                      <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+                        <Box>
+                          <Text fontWeight="medium" mb={2}>Top Languages:</Text>
+                          <Table variant="simple" size="sm">
+                            <Thead>
+                              <Tr>
+                                <Th>Language</Th>
+                                <Th isNumeric>Accepted Suggestions</Th>
+                              </Tr>
+                            </Thead>
+                            <Tbody>
+                              {teamData.languages
+                                .sort((a, b) => (b.total_acceptances || 0) - (a.total_acceptances || 0))
+                                .slice(0, 3)
+                                .map((lang) => (
+                                  <Tr key={lang.name}>
+                                    <Td>{lang.name}</Td>
+                                    <Td isNumeric>{formatNumber(lang.total_acceptances || 0)}</Td>
+                                  </Tr>
+                                ))}
+                            </Tbody>
+                          </Table>
+                        </Box>
+                        
+                        {teamData.editors && teamData.editors.length > 0 && (
+                          <Box>
+                            <Text fontWeight="medium" mb={2}>Top Editors:</Text>
+                            <Table variant="simple" size="sm">
+                              <Thead>
+                                <Tr>
+                                  <Th>Editor</Th>
+                                  <Th isNumeric>Accepted Suggestions</Th>
+                                </Tr>
+                              </Thead>
+                              <Tbody>
+                                {teamData.editors
+                                  .sort((a, b) => (b.total_acceptances || 0) - (a.total_acceptances || 0))
+                                  .slice(0, 3)
+                                  .map((editor) => (
+                                    <Tr key={editor.name}>
+                                      <Td>{editor.name}</Td>
+                                      <Td isNumeric>{formatNumber(editor.total_acceptances || 0)}</Td>
+                                    </Tr>
+                                  ))}
+                              </Tbody>
+                            </Table>
+                          </Box>
+                        )}
+                      </SimpleGrid>
+                    ) : (
+                      <Text color="gray.500">No language or editor data available for this team.</Text>
+                    )}
+                    
+                    <Divider mt={4} mb={4} />
+                  </Box>
+                ))}
+              </Box>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
+      </Box>
+    );
+  }
+  
+  // Fallback to the original single team view if no multi-team data
   if (!hasLanguageComparison && !hasEditorComparison) {
     // If we don't have enough data, show the info message
     return (
@@ -142,6 +506,7 @@ const TeamComparisonReport = () => {
             <ChartCard 
               title="Top Languages by Accepted Suggestions" 
               description="Languages with the most accepted suggestions"
+              infoTooltip="This chart shows which programming languages have the highest number of accepted GitHub Copilot suggestions"
             >
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={languageData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -165,6 +530,7 @@ const TeamComparisonReport = () => {
             <ChartCard 
               title="Editor Usage" 
               description="Copilot usage by editor"
+              infoTooltip="This chart shows which code editors are most commonly used with GitHub Copilot"
             >
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={editorData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>

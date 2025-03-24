@@ -102,6 +102,7 @@ const LanguageEditorReport = () => {
           <ChartCard 
             title="Programming Language Usage" 
             description="Suggestions by programming language"
+            infoTooltip="This chart shows the distribution of GitHub Copilot suggestions across different programming languages. The percentages indicate what portion of all suggestions were made for each language."
           >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -130,6 +131,7 @@ const LanguageEditorReport = () => {
           <ChartCard 
             title="Editor Usage" 
             description="Suggestions by editor"
+            infoTooltip="This chart shows the distribution of GitHub Copilot usage across different code editors. The percentages indicate what portion of all suggestions were made in each editor environment."
           >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>

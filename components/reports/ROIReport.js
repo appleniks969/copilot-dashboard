@@ -75,21 +75,34 @@ const ROIReport = () => {
           title="ROI" 
           value={formatPercentage(metrics.roi.roiPercentage)}
           helpText={`For the last ${dateRange}`}
+          infoTooltip={`ROI = (Money Saved ÷ License Cost - 1) × 100%. 
+Money Saved = ${formatCurrency(metrics.roi.moneySaved)}
+License Cost = ${formatCurrency(totalLicensedUsers * ROI_DEFAULTS.licenseCostPerMonth)}
+Return above investment = ${formatPercentage(metrics.roi.roiPercentage)}`}
         />
         <StatCard 
           title="Hours Saved" 
           value={formatNumber(Math.round(metrics.roi.hoursSaved))}
           helpText="Estimated developer time saved"
+          infoTooltip={`Hours Saved = Total Lines Accepted ÷ Average Lines Per Hour
+${formatNumber(metrics.acceptedLines)} lines ÷ ${ROI_DEFAULTS.avgLinesPerHour} lines/hour 
+= ${formatNumber(Math.round(metrics.roi.hoursSaved))} hours`}
         />
         <StatCard 
           title="Money Saved" 
           value={formatCurrency(metrics.roi.moneySaved)}
           helpText="Based on average hourly rates"
+          infoTooltip={`Money Saved = Hours Saved × Average Hourly Rate
+${formatNumber(Math.round(metrics.roi.hoursSaved))} hours × ${formatCurrency(ROI_DEFAULTS.avgHourlyRate)}/hour
+= ${formatCurrency(metrics.roi.moneySaved)}`}
         />
         <StatCard 
           title="Annual Projected Savings" 
           value={formatCurrency(yearlyProjection.moneySaved)}
           helpText="Based on current usage trends"
+          infoTooltip={`Annual Projected Savings = Monthly Savings × 12
+Monthly Savings = ${formatCurrency(monthlyProjection.moneySaved)}
+= ${formatCurrency(yearlyProjection.moneySaved)} per year`}
         />
       </SimpleGrid>
 
@@ -98,6 +111,11 @@ const ROIReport = () => {
           <ChartCard 
             title="Cost vs. Savings Breakdown" 
             description="Comparison of Copilot costs to estimated savings"
+            infoTooltip={`This chart compares the total cost of GitHub Copilot licenses to the estimated savings from developer productivity.
+
+Cost: ${formatCurrency(totalLicensedUsers * ROI_DEFAULTS.licenseCostPerMonth)} (${totalLicensedUsers} users × ${formatCurrency(ROI_DEFAULTS.licenseCostPerMonth)}/month)
+
+Savings: ${formatCurrency(metrics.roi.moneySaved)} (${formatNumber(Math.round(metrics.roi.hoursSaved))} hours × ${formatCurrency(ROI_DEFAULTS.avgHourlyRate)}/hour)`}
           >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>

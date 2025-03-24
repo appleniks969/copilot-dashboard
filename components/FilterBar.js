@@ -65,6 +65,7 @@ const FilterBar = () => {
             value={dateRange} 
             onChange={(e) => setDateRange(e.target.value)}
           >
+            <option value={DATE_RANGES.LAST_1_DAY}>Last 1 Day</option>
             <option value={DATE_RANGES.LAST_7_DAYS}>Last 7 Days</option>
             <option value={DATE_RANGES.LAST_14_DAYS}>Last 14 Days</option>
             <option value={DATE_RANGES.LAST_28_DAYS}>Last 28 Days</option>
