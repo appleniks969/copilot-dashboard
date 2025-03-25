@@ -1,6 +1,6 @@
 import React from 'react';
 import { Flex, Select, Input, Button, FormControl, FormLabel, Stack, Text } from '@chakra-ui/react';
-import { DATE_RANGES } from '../lib/config';
+import { DATE_RANGES, TEAMS_LIST } from '../lib/config';
 import { useCopilot } from '../lib/CopilotContext';
 
 const FilterBar = () => {
@@ -11,16 +11,8 @@ const FilterBar = () => {
     setTeam,
     dateRange,
     setDateRange,
-    totalLicensedUsers,
-    updateTotalLicensedUsers,
-    teamBreakdownData,
+    multiTeamData,
   } = useCopilot();
-
-  // Extract team names from breakdown data
-  const teamOptions = React.useMemo(() => {
-    if (!teamBreakdownData?.teams) return [];
-    return teamBreakdownData.teams.map(team => team.team_slug);
-  }, [teamBreakdownData]);
 
   return (
     <Flex 
@@ -42,20 +34,36 @@ const FilterBar = () => {
             value={organization} 
             onChange={(e) => setOrganization(e.target.value)}
             placeholder="Enter GitHub organization"
+            bg="white"
           />
         </FormControl>
         
         <FormControl>
-          <FormLabel fontWeight="bold">Team (Preferred View)</FormLabel>
-          <Input 
-            value={team} 
-            onChange={(e) => setTeam(e.target.value)}
-            placeholder="Enter GitHub team slug"
-            borderColor="blue.300"
-            _focus={{ borderColor: "blue.500" }}
-          />
+          <FormLabel fontWeight="bold">Team</FormLabel>
+          {TEAMS_LIST.length > 0 ? (
+            <Select 
+              value={team} 
+              onChange={(e) => setTeam(e.target.value)}
+              bg="white"
+              borderColor="blue.300"
+              _focus={{ borderColor: "blue.500" }}
+            >
+              {TEAMS_LIST.map((teamName, index) => (
+                <option key={index} value={teamName}>{teamName}</option>
+              ))}
+            </Select>
+          ) : (
+            <Input 
+              value={team} 
+              onChange={(e) => setTeam(e.target.value)}
+              placeholder="Enter GitHub team slug"
+              bg="white"
+              borderColor="blue.300"
+              _focus={{ borderColor: "blue.500" }}
+            />
+          )}
           <Text fontSize="xs" color="gray.600" mt={1}>
-            When team is specified, team data will be shown. Leave empty for organization view.
+            Team data will be shown for the selected team.
           </Text>
         </FormControl>
         
@@ -64,6 +72,7 @@ const FilterBar = () => {
           <Select 
             value={dateRange} 
             onChange={(e) => setDateRange(e.target.value)}
+            bg="white"
           >
             <option value={DATE_RANGES.LAST_1_DAY}>Last 1 Day</option>
             <option value={DATE_RANGES.LAST_7_DAYS}>Last 7 Days</option>
@@ -73,21 +82,13 @@ const FilterBar = () => {
         </FormControl>
       </Stack>
       
-      <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
-        <FormControl>
-          <FormLabel>Total Licensed Users</FormLabel>
-          <Input 
-            type="number" 
-            value={totalLicensedUsers}
-            onChange={(e) => updateTotalLicensedUsers(parseInt(e.target.value) || 0)}
-            placeholder="Enter total licensed users"
-          />
-        </FormControl>
-        
+      <Stack direction={{ base: 'column', md: 'row' }} spacing={4} alignItems="flex-end">
         <Button 
           colorScheme="blue" 
-          alignSelf="flex-end"
           onClick={() => window.location.reload()}
+          bg="blue.500"
+          _hover={{ bg: "blue.600" }}
+          color="white"
         >
           Refresh Data
         </Button>
