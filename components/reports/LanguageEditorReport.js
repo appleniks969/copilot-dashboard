@@ -11,6 +11,11 @@ import {
   Tr,
   Th,
   Td,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { 
   BarChart, 
@@ -31,9 +36,9 @@ import { CHART_COLORS, PROGRAMMING_LANGUAGES, EDITORS } from '../../lib/config';
 import { formatNumber, formatPercentage, transformDataForCharts } from '../../lib/utils';
 
 const LanguageEditorReport = () => {
-  const { orgData, metrics } = useCopilot();
+  const { metrics, dateRange, team } = useCopilot();
   
-  if (!orgData || !metrics) {
+  if (!metrics) {
     return (
       <Box p={4}>
         <Text>No data available. Please make sure you're authenticated and have selected a valid organization and team.</Text>
@@ -63,22 +68,59 @@ const LanguageEditorReport = () => {
       }))
     : [];
 
+  // Sort the data by value for better visualization
+  const sortedLanguageData = [...languageData].sort((a, b) => b.value - a.value);
+  const sortedEditorData = [...editorData].sort((a, b) => b.value - a.value);
+
   // If we don't have data yet, provide a message
   if (languageData.length === 0 && editorData.length === 0) {
     return (
       <Box p={4}>
-        <Text>No language or editor data available in the current metrics. Try a different date range or team.</Text>
+        <Alert
+          status="info"
+          variant="subtle"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          textAlign="center"
+          height="200px"
+          borderRadius="md"
+        >
+          <AlertIcon boxSize="40px" mr={0} />
+          <AlertTitle mt={4} mb={1} fontSize="lg">
+            No Language or Editor Data Available
+          </AlertTitle>
+          <AlertDescription maxWidth="sm">
+            There is no language or editor data available for {team || "this organization"} 
+            in the last {dateRange}. Try selecting a different date range or team.
+          </AlertDescription>
+        </Alert>
       </Box>
     );
   }
 
-  // Prepare simplified data for the pie charts
-  const pieLanguageData = languageData.slice(0, 5).map(item => ({
+  // Prepare simplified data for the pie charts - take top 5 for better visualization
+  const pieLanguageData = sortedLanguageData.slice(0, 5).map(item => ({
     name: item.name,
     value: item.value,
   }));
 
-  const pieEditorData = editorData.map(item => ({
+  // Add "Others" category if there are more than 5 languages
+  if (sortedLanguageData.length > 5) {
+    const othersValue = sortedLanguageData
+      .slice(5)
+      .reduce((sum, item) => sum + item.value, 0);
+    
+    if (othersValue > 0) {
+      pieLanguageData.push({
+        name: 'Others',
+        value: othersValue,
+      });
+    }
+  }
+
+  // Take top 5 editors (or all if less than 5)
+  const pieEditorData = sortedEditorData.slice(0, 5).map(item => ({
     name: item.name,
     value: item.value,
   }));
@@ -89,13 +131,25 @@ const LanguageEditorReport = () => {
     CHART_COLORS.secondary, 
     CHART_COLORS.tertiary, 
     CHART_COLORS.quaternary, 
-    CHART_COLORS.gray
+    CHART_COLORS.gray,
+    '#6B46C1', // Additional colors for more items
+    '#DD6B20',
+    '#319795',
   ];
+  
+  const cardBg = useColorModeValue('white', 'gray.700');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const tableBg = useColorModeValue('white', 'gray.800');
   
   return (
     <Box>
-      <Heading size="lg" mb={6}>Language and Editor Usage Report</Heading>
-      <Text mb={6}>This report identifies which programming languages and editors Copilot is most used with, aiding in targeted support and training.</Text>
+      <Heading size="lg" mb={6} color={useColorModeValue('blue.600', 'blue.300')}>
+        Language and Editor Usage Report
+      </Heading>
+      <Text mb={6}>
+        This report identifies which programming languages and editors Copilot is most used with, 
+        aiding in targeted support and training.
+      </Text>
 
       <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6} mb={6}>
         <GridItem>
@@ -103,6 +157,9 @@ const LanguageEditorReport = () => {
             title="Programming Language Usage" 
             description="Suggestions by programming language"
             infoTooltip="This chart shows the distribution of GitHub Copilot suggestions across different programming languages. The percentages indicate what portion of all suggestions were made for each language."
+            bg={cardBg}
+            borderColor={borderColor}
+            accentColor="blue.400"
           >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -120,7 +177,15 @@ const LanguageEditorReport = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => formatNumber(value)} />
+                <Tooltip 
+                  formatter={(value) => formatNumber(value)}
+                  contentStyle={{
+                    backgroundColor: cardBg,
+                    borderColor: borderColor,
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}
+                />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -132,6 +197,9 @@ const LanguageEditorReport = () => {
             title="Editor Usage" 
             description="Suggestions by editor"
             infoTooltip="This chart shows the distribution of GitHub Copilot usage across different code editors. The percentages indicate what portion of all suggestions were made in each editor environment."
+            bg={cardBg}
+            borderColor={borderColor}
+            accentColor="purple.400"
           >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -149,7 +217,15 @@ const LanguageEditorReport = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => formatNumber(value)} />
+                <Tooltip 
+                  formatter={(value) => formatNumber(value)}
+                  contentStyle={{
+                    backgroundColor: cardBg,
+                    borderColor: borderColor,
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}
+                />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -159,7 +235,7 @@ const LanguageEditorReport = () => {
 
       <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6}>
         <GridItem>
-          <Box p={5} shadow="md" borderWidth="1px" borderRadius="lg" bg="white">
+          <Box p={5} shadow="sm" borderWidth="1px" borderRadius="lg" bg={tableBg}>
             <Heading size="md" mb={4}>Language Usage Details</Heading>
             <Box overflowX="auto">
               <Table variant="simple" size="sm">
@@ -171,8 +247,8 @@ const LanguageEditorReport = () => {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {languageData.length > 0 ? (
-                    languageData.map((lang) => (
+                  {sortedLanguageData.length > 0 ? (
+                    sortedLanguageData.map((lang) => (
                       <Tr key={lang.name}>
                         <Td>{lang.name}</Td>
                         <Td isNumeric>{formatNumber(lang.value)}</Td>
@@ -191,7 +267,7 @@ const LanguageEditorReport = () => {
         </GridItem>
         
         <GridItem>
-          <Box p={5} shadow="md" borderWidth="1px" borderRadius="lg" bg="white">
+          <Box p={5} shadow="sm" borderWidth="1px" borderRadius="lg" bg={tableBg}>
             <Heading size="md" mb={4}>Editor Usage Details</Heading>
             <Box overflowX="auto">
               <Table variant="simple" size="sm">
@@ -203,8 +279,8 @@ const LanguageEditorReport = () => {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {editorData.length > 0 ? (
-                    editorData.map((editor) => (
+                  {sortedEditorData.length > 0 ? (
+                    sortedEditorData.map((editor) => (
                       <Tr key={editor.name}>
                         <Td>{editor.name}</Td>
                         <Td isNumeric>{formatNumber(editor.value)}</Td>

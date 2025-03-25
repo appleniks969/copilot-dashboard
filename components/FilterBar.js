@@ -85,7 +85,13 @@ const FilterBar = () => {
       <Stack direction={{ base: 'column', md: 'row' }} spacing={4} alignItems="flex-end">
         <Button 
           colorScheme="blue" 
-          onClick={() => window.location.reload()}
+          onClick={() => {
+            // This will trigger a data refresh through the context's useEffect
+            // by slightly modifying the date range and setting it back
+            const currentRange = dateRange;
+            setDateRange('1 day'); // Set to a different value temporarily
+            setTimeout(() => setDateRange(currentRange), 100); // Set back to original value
+          }}
           bg="blue.500"
           _hover={{ bg: "blue.600" }}
           color="white"

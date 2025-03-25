@@ -11,7 +11,7 @@ import { useCopilot } from '../lib/CopilotContext';
 
 // Raw Data component to display the raw API data
 const RawDataReport = () => {
-  const { rawData } = useCopilot();
+  const { rawData, orgData, metrics, team, dateRange } = useCopilot();
   
   if (!rawData) {
     return (
@@ -21,11 +21,63 @@ const RawDataReport = () => {
     );
   }
   
+  // Extract useful metadata to display along with raw data
+  const metaInfo = {
+    dataSource: metrics?.dataSource || 'unknown',
+    teamSlug: team || 'organization level',
+    dateRange: dateRange,
+    processed: {
+      activeUsers: metrics?.totalActiveUsers || 0,
+      totalSuggestions: metrics?.totalSuggestions || 0,
+      acceptedSuggestions: metrics?.acceptedSuggestions || 0,
+      languages: metrics?.languages?.length || 0,
+      editors: metrics?.editors?.length || 0
+    },
+    dataPoints: orgData?.dataPoints || (Array.isArray(rawData) ? rawData.length : 1),
+    processedDays: orgData?.processedDays || 0
+  };
+  
   return (
     <Box>
       <Heading size="lg" mb={6}>Raw API Data</Heading>
       <Text mb={6}>This view shows the raw data returned from the GitHub Copilot API for debugging and verification purposes.</Text>
       
+      {/* Data validation summary */}
+      <Box 
+        p={4} 
+        mb={4}
+        bg={useColorModeValue('blue.50', 'blue.900')} 
+        borderRadius="md"
+        borderWidth="1px"
+        borderColor={useColorModeValue('blue.200', 'blue.600')}
+      >
+        <Heading size="md" mb={3}>Data Validation Summary</Heading>
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+          <Box>
+            <Text fontWeight="bold">Data Source:</Text>
+            <Text>{metaInfo.dataSource}</Text>
+
+            <Text fontWeight="bold" mt={2}>Team:</Text>
+            <Text>{metaInfo.teamSlug}</Text>
+
+            <Text fontWeight="bold" mt={2}>Date Range:</Text>
+            <Text>Last {metaInfo.dateRange}</Text>
+          </Box>
+          
+          <Box>
+            <Text fontWeight="bold">Processed Data Points:</Text>
+            <Text>{metaInfo.dataPoints} (days processed: {metaInfo.processedDays})</Text>
+            
+            <Text fontWeight="bold" mt={2}>Processed Metrics:</Text>
+            <Text>Users: {metaInfo.processed.activeUsers}, Suggestions: {metaInfo.processed.totalSuggestions}, Accepted: {metaInfo.processed.acceptedSuggestions}</Text>
+            
+            <Text fontWeight="bold" mt={2}>Data Categories:</Text>
+            <Text>Languages: {metaInfo.processed.languages}, Editors: {metaInfo.processed.editors}</Text>
+          </Box>
+        </SimpleGrid>
+      </Box>
+      
+      {/* Raw JSON data */}
       <Box 
         p={4} 
         bg={useColorModeValue('gray.50', 'gray.800')} 
