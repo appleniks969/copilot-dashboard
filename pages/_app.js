@@ -1,6 +1,7 @@
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { CopilotProvider } from '../lib/CopilotContext';
 import Layout from '../components/Layout';
+import { useRouter } from 'next/router';
 
 // Create a custom Chakra UI theme
 const theme = extendTheme({
@@ -147,10 +148,13 @@ const theme = extendTheme({
 });
 
 function MyApp({ Component, pageProps }) {
+  const router = useRouter();
+  const isRedesignPage = router.pathname === '/redesign';
+
   return (
     <ChakraProvider theme={theme}>
       <CopilotProvider>
-        <Layout>
+        <Layout title={isRedesignPage ? "Copilot Impact Center" : "GitHub Copilot Usage Dashboard"}>
           <Component {...pageProps} />
         </Layout>
       </CopilotProvider>
