@@ -13,7 +13,7 @@ import {
   Icon,
   Tooltip
 } from '@chakra-ui/react';
-import { DATE_RANGES, TEAMS_LIST } from '../lib/config';
+import { TEAMS_LIST } from '../lib/config';
 import { useCopilot } from '../lib/CopilotContext';
 import { RepeatIcon } from '@chakra-ui/icons';
 
@@ -23,18 +23,16 @@ const FilterBar = () => {
     setOrganization,
     team,
     setTeam,
-    dateRange,
-    setDateRange,
-    multiTeamData,
+    // Date range selection has been moved to individual reports
   } = useCopilot();
-
+  
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const textColor = useColorModeValue('gray.700', 'gray.200');
   const labelColor = useColorModeValue('gray.700', 'gray.300');
   const inputBgColor = useColorModeValue('white', 'gray.700');
   const hoverBorderColor = useColorModeValue('brand.500', 'brand.300');
-
+  
   return (
     <Box
       mb={8}
@@ -135,33 +133,6 @@ const FilterBar = () => {
               Team data will be shown for the selected team.
             </Text>
           </FormControl>
-          
-          <FormControl>
-            <FormLabel 
-              fontWeight="medium" 
-              color={labelColor}
-              fontSize="sm"
-            >
-              Date Range
-            </FormLabel>
-            <Select 
-              value={dateRange} 
-              onChange={(e) => setDateRange(e.target.value)}
-              bg={inputBgColor}
-              borderColor={borderColor}
-              borderRadius="md"
-              boxShadow="sm"
-              _hover={{ borderColor: hoverBorderColor }}
-              _focus={{ borderColor: "brand.500", boxShadow: "0 0 0 1px brand.500" }}
-              fontSize="md"
-              iconColor="brand.500"
-            >
-              <option value={DATE_RANGES.LAST_1_DAY}>Last 1 Day</option>
-              <option value={DATE_RANGES.LAST_7_DAYS}>Last 7 Days</option>
-              <option value={DATE_RANGES.LAST_14_DAYS}>Last 14 Days</option>
-              <option value={DATE_RANGES.LAST_28_DAYS}>Last 28 Days</option>
-            </Select>
-          </FormControl>
         </Stack>
         
         <Tooltip 
@@ -172,11 +143,10 @@ const FilterBar = () => {
         >
           <Button 
             onClick={() => {
-              // This will trigger a data refresh through the context's useEffect
-              // by slightly modifying the date range and setting it back
-              const currentRange = dateRange;
-              setDateRange('1 day'); // Set to a different value temporarily
-              setTimeout(() => setDateRange(currentRange), 100); // Set back to original value
+              // Force refresh by changing organization temporarily
+              const currentOrg = organization;
+              setOrganization(currentOrg + " ");
+              setTimeout(() => setOrganization(currentOrg), 100);
             }}
             colorScheme="brand"
             minW="120px"
@@ -186,7 +156,7 @@ const FilterBar = () => {
             rightIcon={<Icon as={RepeatIcon} />}
             size="md"
           >
-            Refresh
+            Refresh All
           </Button>
         </Tooltip>
       </Flex>

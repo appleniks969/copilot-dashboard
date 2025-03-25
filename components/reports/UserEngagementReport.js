@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Grid, 
@@ -7,6 +7,8 @@ import {
   Heading,
   SimpleGrid,
   useColorModeValue,
+  Flex,
+  Spacer,
 } from '@chakra-ui/react';
 import { 
   BarChart, 
@@ -25,12 +27,30 @@ import {
 } from 'recharts';
 import StatCard from '../StatCard';
 import ChartCard from '../ChartCard';
+import DateRangeFilter from '../DateRangeFilter';
 import { useCopilot } from '../../lib/CopilotContext';
-import { CHART_COLORS } from '../../lib/config';
+import { CHART_COLORS, DATE_RANGES } from '../../lib/config';
 import { formatNumber, formatPercentage, transformDataForCharts } from '../../lib/utils';
 
 const UserEngagementReport = () => {
-  const { metrics, dateRange } = useCopilot();
+  // Use report-specific date range
+  const { 
+    dateRanges, 
+    updateReportDateRange, 
+    getMetricsForReport, 
+    isLoading 
+  } = useCopilot();
+  
+  const reportId = 'userEngagement';
+  const [reportDateRange, setReportDateRange] = useState(dateRanges[reportId] || DATE_RANGES.LAST_28_DAYS);
+
+  // Update date range in context when it changes locally
+  useEffect(() => {
+    updateReportDateRange(reportId, reportDateRange);
+  }, [reportDateRange, reportId, updateReportDateRange]);
+  
+  // Get metrics specific to this report's date range
+  const metrics = getMetricsForReport(reportId);
   
   if (!metrics) {
     return (
@@ -39,7 +59,7 @@ const UserEngagementReport = () => {
       </Box>
     );
   }
-
+  
   // Create data for user engagement chart
   const engagementData = [
     { name: 'Active Users', value: metrics.totalActiveUsers || 0 },
@@ -47,7 +67,7 @@ const UserEngagementReport = () => {
     { name: 'Accepted Suggestions', value: metrics.acceptedSuggestions || 0 },
     { name: 'Total Suggestions', value: metrics.totalSuggestions || 0 },
   ];
-
+  
   // Create data for acceptance rate pie chart
   const acceptanceData = [
     { name: 'Accepted', value: metrics.acceptedSuggestions || 0 },
@@ -59,14 +79,36 @@ const UserEngagementReport = () => {
   
   return (
     <Box>
-      <Heading size="lg" mb={6} color={useColorModeValue('blue.600', 'blue.300')}>User Engagement Report</Heading>
-      <Text mb={6}>This report shows how actively developers are using Copilot across your organization.</Text>
-
+      <Flex 
+        direction={{ base: "column", md: "row" }}
+        align={{ base: "flex-start", md: "center" }}
+        justify="space-between"
+        mb={6}
+        gap={4}
+      >
+        <Heading size="lg" color={useColorModeValue('blue.600', 'blue.300')}>
+          User Engagement Report
+        </Heading>
+        
+        <Box>
+          <DateRangeFilter 
+            dateRange={reportDateRange}
+            setDateRange={setReportDateRange}
+            compact={true}
+          />
+        </Box>
+      </Flex>
+      
+      <Text mb={6}>
+        This report shows how actively developers are using Copilot across your organization.
+        {isLoading && " Loading..."}
+      </Text>
+      
       <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6} mb={6}>
         <StatCard 
           title="Total Active Users" 
           value={formatNumber(metrics.totalActiveUsers)}
-          helpText={`Over the last ${dateRange}`}
+          helpText={`Over the last ${reportDateRange}`}
           accentColor="blue.400"
           bg={cardBg}
           borderColor={borderColor}
@@ -90,13 +132,13 @@ const UserEngagementReport = () => {
         <StatCard 
           title="Total Suggestions" 
           value={formatNumber(metrics.totalSuggestions)}
-          helpText={`Over the last ${dateRange}`}
+          helpText={`Over the last ${reportDateRange}`}
           accentColor="orange.400"
           bg={cardBg}
           borderColor={borderColor}
         />
       </SimpleGrid>
-
+      
       <Grid 
         templateColumns={{ base: "1fr", lg: "1fr 1fr" }} 
         gap={6}
