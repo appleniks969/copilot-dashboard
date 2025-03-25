@@ -1,5 +1,16 @@
 import React from 'react';
-import { Box, Stat, StatLabel, StatNumber, StatHelpText, StatArrow, Flex, Icon, Tooltip, useColorModeValue } from '@chakra-ui/react';
+import { 
+  Box, 
+  Stat, 
+  StatLabel, 
+  StatNumber, 
+  StatHelpText, 
+  StatArrow, 
+  Flex, 
+  Icon, 
+  Tooltip, 
+  useColorModeValue 
+} from '@chakra-ui/react';
 import { InfoIcon } from '@chakra-ui/icons';
 
 const StatCard = ({ 
@@ -10,33 +21,35 @@ const StatCard = ({
   change, 
   changeDirection, 
   infoTooltip, 
-  accentColor = 'blue.400',
+  accentColor = 'brand.500',
   bg,
   borderColor,
   ...rest 
 }) => {
   // Default values if not provided
-  const backgroundColor = bg || useColorModeValue('white', 'gray.700');
-  const border = borderColor || useColorModeValue('gray.200', 'gray.600');
+  const backgroundColor = bg || useColorModeValue('white', 'gray.800');
+  const border = borderColor || useColorModeValue('gray.200', 'gray.700');
   const labelColor = useColorModeValue('gray.600', 'gray.300');
   const valueColor = useColorModeValue('gray.800', 'white');
   const helpTextColor = useColorModeValue('gray.500', 'gray.400');
+  const accentLightColor = accentColor.replace('500', '200');
 
   return (
     <Box
-      p={5}
-      shadow="sm"
+      p={6}
+      shadow="md"
       borderWidth="1px"
-      borderRadius="lg"
+      borderRadius="xl"
       bg={backgroundColor}
       borderColor={border}
       position="relative"
       overflow="hidden"
-      transition="all 0.2s"
+      transition="all 0.3s ease"
       _hover={{ 
-        transform: 'translateY(-2px)', 
-        shadow: 'md',
-        borderColor: accentColor
+        transform: 'translateY(-4px)', 
+        shadow: 'lg',
+        borderColor: accentColor,
+        zIndex: 1
       }}
       {...rest}
     >
@@ -44,13 +57,20 @@ const StatCard = ({
         position="absolute" 
         top="0" 
         left="0" 
-        width="4px" 
-        height="100%" 
-        bg={accentColor} 
+        right="0"
+        height="5px" 
+        bgGradient={`linear(to-r, ${accentColor}, ${accentLightColor})`}
       />
       <Stat>
-        <Flex justify="space-between" mb={2}>
-          <StatLabel fontSize="md" color={labelColor} fontWeight="medium">{title}</StatLabel>
+        <Flex justify="space-between" mb={3} align="center">
+          <StatLabel 
+            fontSize="md" 
+            color={labelColor} 
+            fontWeight="semibold"
+            letterSpacing="tight"
+          >
+            {title}
+          </StatLabel>
           <Flex>
             {infoTooltip && (
               <Tooltip 
@@ -75,6 +95,9 @@ const StatCard = ({
           fontWeight="bold" 
           color={valueColor}
           letterSpacing="tight"
+          my={2}
+          bgGradient={`linear(to-r, ${accentColor}, ${accentLightColor})`}
+          bgClip="text"
         >
           {value}
         </StatNumber>
@@ -82,14 +105,24 @@ const StatCard = ({
           <StatHelpText 
             fontSize="sm" 
             color={helpTextColor}
-            mt={1}
+            mt={2}
+            fontWeight="medium"
           >
             {helpText}
           </StatHelpText>
         )}
         {change && (
-          <StatHelpText display="flex" alignItems="center">
-            <StatArrow type={changeDirection || 'increase'} color={changeDirection === 'decrease' ? 'red.400' : 'green.400'} />
+          <StatHelpText 
+            display="flex" 
+            alignItems="center" 
+            mt={2}
+            fontWeight="medium"
+            fontSize="sm"
+          >
+            <StatArrow 
+              type={changeDirection || 'increase'} 
+              color={changeDirection === 'decrease' ? 'red.400' : 'green.400'} 
+            />
             <Box color={changeDirection === 'decrease' ? 'red.400' : 'green.400'}>
               {change}
             </Box>

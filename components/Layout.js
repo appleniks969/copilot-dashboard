@@ -1,8 +1,13 @@
 import React from 'react';
-import { Box, Container } from '@chakra-ui/react';
+import { Box, Container, useColorModeValue } from '@chakra-ui/react';
 import Head from 'next/head';
 
 const Layout = ({ children, title = 'GitHub Copilot Usage Dashboard' }) => {
+  const bgGradient = useColorModeValue(
+    'linear(to-b, white, gray.50)',
+    'linear(to-b, gray.900, gray.800)'
+  );
+
   return (
     <>
       <Head>
@@ -10,10 +15,20 @@ const Layout = ({ children, title = 'GitHub Copilot Usage Dashboard' }) => {
         <meta name="description" content="GitHub Copilot Usage Dashboard for tracking and analyzing Copilot usage metrics" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
       
-      <Box minH="100vh" bg="gray.50">
-        <Container maxW="container.xl" pt={4} pb={8}>
+      <Box 
+        minH="100vh" 
+        bgGradient={bgGradient}
+        backgroundAttachment="fixed"
+      >
+        <Container 
+          maxW="container.xl" 
+          pt={6} 
+          pb={12}
+          px={{ base: 4, md: 6 }}
+        >
           {children}
         </Container>
       </Box>

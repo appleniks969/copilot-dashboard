@@ -117,35 +117,87 @@ const Dashboard = () => {
   return (
     <Container maxW="container.xl" p={0}>
       <Box 
-        bg={headerBg} 
+        bg={useColorModeValue('white', 'gray.800')} 
         p={6} 
-        borderBottomWidth="1px" 
-        borderBottomColor={useColorModeValue('gray.200', 'gray.700')}
-        borderRadius="md"
-        mb={6}
+        borderWidth="1px" 
+        borderColor={useColorModeValue('gray.200', 'gray.700')}
+        borderRadius="xl"
+        mb={8}
+        boxShadow="lg"
+        position="relative"
+        overflow="hidden"
       >
-        <Flex justifyContent="space-between" alignItems="center">
+        <Box 
+          position="absolute" 
+          top="0" 
+          left="0" 
+          right="0" 
+          height="5px" 
+          bgGradient="linear(to-r, brand.400, brand.600)" 
+        />
+        
+        <Flex 
+          justifyContent="space-between" 
+          alignItems={{ base: "flex-start", md: "center" }}
+          flexDirection={{ base: "column", md: "row" }}
+          gap={{ base: 4, md: 0 }}
+        >
           <Box>
-            <Heading>GitHub Copilot Dashboard</Heading>
-            <Flex mt={2} alignItems="center" flexWrap="wrap">
+            <Heading 
+              bgGradient="linear(to-r, brand.500, blue.600)" 
+              bgClip="text"
+              fontWeight="bold"
+              letterSpacing="tight"
+            >
+              GitHub Copilot Dashboard
+            </Heading>
+            <Flex mt={3} alignItems="center" flexWrap="wrap" gap={2}>
               {team && (
-                <Badge colorScheme="blue" fontSize="md" mr={2} p={1}>
+                <Badge 
+                  colorScheme="brand" 
+                  fontSize="sm" 
+                  px={3} 
+                  py={1} 
+                  borderRadius="full"
+                  boxShadow="sm"
+                  fontWeight="medium"
+                >
                   Team: {team}
                 </Badge>
               )}
-              <Badge colorScheme="green" fontSize="md" mr={2} p={1}>
+              <Badge 
+                colorScheme="green" 
+                fontSize="sm" 
+                px={3} 
+                py={1} 
+                borderRadius="full"
+                boxShadow="sm"
+                fontWeight="medium"
+              >
                 Org: {organization}
               </Badge>
-              <Badge colorScheme="purple" fontSize="md" p={1}>
+              <Badge 
+                colorScheme="purple" 
+                fontSize="sm" 
+                px={3} 
+                py={1} 
+                borderRadius="full"
+                boxShadow="sm"
+                fontWeight="medium"
+              >
                 Last {dateRange}
               </Badge>
             </Flex>
           </Box>
           <Button 
             colorScheme="red" 
-            variant="solid" 
+            variant="outline" 
             onClick={handleLogout}
-            _hover={{ bg: 'red.600' }}
+            size="md"
+            _hover={{ bg: 'red.50', borderColor: 'red.500' }}
+            borderRadius="full"
+            px={6}
+            fontWeight="medium"
           >
             Logout
           </Button>
@@ -155,41 +207,156 @@ const Dashboard = () => {
       <FilterBar />
 
       {isLoading && (
-        <Box p={8} textAlign="center">
-          <Spinner size="xl" color="blue.500" thickness="4px" />
-          <Text mt={4} fontSize="lg">Loading Copilot data...</Text>
+        <Box 
+          p={10} 
+          textAlign="center" 
+          bg={useColorModeValue('white', 'gray.800')}
+          borderRadius="xl"
+          boxShadow="md"
+          borderWidth="1px"
+          borderColor={useColorModeValue('gray.100', 'gray.700')}
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          gap={5}
+        >
+          <Spinner 
+            size="xl" 
+            thickness="4px"
+            speed="0.65s"
+            emptyColor={useColorModeValue('gray.200', 'gray.700')}
+            color="brand.500"
+          />
+          <Text 
+            fontSize="lg" 
+            fontWeight="medium"
+            color={useColorModeValue('gray.600', 'gray.300')}
+          >
+            Loading Copilot data...
+          </Text>
         </Box>
       )}
 
       {error && (
-        <Box p={6} bg="red.50" color="red.600" borderRadius="md" mb={6} borderWidth="1px" borderColor="red.300">
-          <Heading size="md" mb={2}>Error Loading Data</Heading>
-          <Text>{error}</Text>
+        <Box 
+          p={8} 
+          bg={useColorModeValue('red.50', 'rgba(254, 178, 178, 0.1)')} 
+          color={useColorModeValue('red.600', 'red.300')} 
+          borderRadius="lg" 
+          mb={6} 
+          borderWidth="1px" 
+          borderColor={useColorModeValue('red.200', 'red.700')}
+          boxShadow="md"
+        >
+          <Heading size="md" mb={3}>Error Loading Data</Heading>
+          <Text fontSize="md">{error}</Text>
         </Box>
       )}
 
       {!isLoading && !error && (
         <Box 
-          bg={bgColor} 
+          bg={useColorModeValue('white', 'gray.800')}
           color={textColor} 
-          borderRadius="lg" 
-          boxShadow="md" 
+          borderRadius="xl" 
+          boxShadow="lg" 
           overflow="hidden"
+          borderWidth="1px"
+          borderColor={useColorModeValue('gray.200', 'gray.700')}
         >
-          <Tabs colorScheme="blue" isLazy variant="enclosed">
+          <Tabs 
+            colorScheme="brand" 
+            isLazy 
+            variant="enclosed"
+            size="md"
+          >
             <TabList 
               borderBottomWidth="1px" 
               borderBottomColor={useColorModeValue('gray.200', 'gray.700')}
               bg={useColorModeValue('gray.50', 'gray.900')}
               overflowX="auto" 
-              p={2}
+              px={4}
+              py={2}
+              gap={2}
             >
-              <Tab _selected={{ color: 'blue.500', borderColor: 'blue.500', borderBottomColor: 'white' }}>User Engagement</Tab>
-              <Tab _selected={{ color: 'blue.500', borderColor: 'blue.500', borderBottomColor: 'white' }}>Productivity</Tab>
-              <Tab _selected={{ color: 'blue.500', borderColor: 'blue.500', borderBottomColor: 'white' }}>ROI Calculation</Tab>
-              <Tab _selected={{ color: 'blue.500', borderColor: 'blue.500', borderBottomColor: 'white' }}>Language & Editor</Tab>
-              <Tab _selected={{ color: 'blue.500', borderColor: 'blue.500', borderBottomColor: 'white' }}>Team Comparison</Tab>
-              <Tab _selected={{ color: 'blue.500', borderColor: 'blue.500', borderBottomColor: 'white' }}>Raw Data</Tab>
+              <Tab 
+                borderRadius="md" 
+                fontWeight="medium"
+                _selected={{ 
+                  color: 'brand.600', 
+                  bg: 'white', 
+                  borderColor: 'gray.200', 
+                  borderBottomColor: 'white',
+                  fontWeight: 'semibold',
+                }}
+              >
+                User Engagement
+              </Tab>
+              <Tab 
+                borderRadius="md" 
+                fontWeight="medium"
+                _selected={{ 
+                  color: 'brand.600', 
+                  bg: 'white', 
+                  borderColor: 'gray.200', 
+                  borderBottomColor: 'white',
+                  fontWeight: 'semibold',
+                }}
+              >
+                Productivity
+              </Tab>
+              <Tab 
+                borderRadius="md" 
+                fontWeight="medium"
+                _selected={{ 
+                  color: 'brand.600', 
+                  bg: 'white', 
+                  borderColor: 'gray.200', 
+                  borderBottomColor: 'white',
+                  fontWeight: 'semibold',
+                }}
+              >
+                ROI Calculation
+              </Tab>
+              <Tab 
+                borderRadius="md" 
+                fontWeight="medium"
+                _selected={{ 
+                  color: 'brand.600', 
+                  bg: 'white', 
+                  borderColor: 'gray.200', 
+                  borderBottomColor: 'white',
+                  fontWeight: 'semibold',
+                }}
+              >
+                Language & Editor
+              </Tab>
+              <Tab 
+                borderRadius="md" 
+                fontWeight="medium"
+                _selected={{ 
+                  color: 'brand.600', 
+                  bg: 'white', 
+                  borderColor: 'gray.200', 
+                  borderBottomColor: 'white',
+                  fontWeight: 'semibold',
+                }}
+              >
+                Team Comparison
+              </Tab>
+              <Tab 
+                borderRadius="md" 
+                fontWeight="medium"
+                _selected={{ 
+                  color: 'brand.600', 
+                  bg: 'white', 
+                  borderColor: 'gray.200', 
+                  borderBottomColor: 'white',
+                  fontWeight: 'semibold',
+                }}
+              >
+                Raw Data
+              </Tab>
             </TabList>
 
             <TabPanels p={6}>
