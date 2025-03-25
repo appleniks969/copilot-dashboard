@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Box, 
   Grid, 
@@ -43,11 +43,23 @@ const UserEngagementReport = () => {
   
   const reportId = 'userEngagement';
   const [reportDateRange, setReportDateRange] = useState(dateRanges[reportId] || DATE_RANGES.LAST_28_DAYS);
-
-  // Update date range in context when it changes locally
+  
+  // Use a ref to track if this is the initial render
+  const initialRenderRef = useRef(true);
+  
+  // Only update date range in context if it's not the initial render or if the date has changed
   useEffect(() => {
-    updateReportDateRange(reportId, reportDateRange);
-  }, [reportDateRange, reportId, updateReportDateRange]);
+    // Skip the initial render which would cause an unnecessary API call
+    if (initialRenderRef.current) {
+      initialRenderRef.current = false;
+      return;
+    }
+    
+    // Only update if the date range has actually changed from what's in context
+    if (reportDateRange !== dateRanges[reportId]) {
+      updateReportDateRange(reportId, reportDateRange);
+    }
+  }, [reportDateRange, reportId, dateRanges, updateReportDateRange]);
   
   // Get metrics specific to this report's date range
   const metrics = getMetricsForReport(reportId);
