@@ -120,10 +120,11 @@ const UserEngagementReport = () => {
         <StatCard 
           title="Total Active Users" 
           value={formatNumber(metrics.totalActiveUsers)}
-          helpText={`Over the last ${reportDateRange}`}
+          helpText="Total users who received suggestions"
           accentColor="blue.400"
           bg={cardBg}
           borderColor={borderColor}
+          timeFrame={reportDateRange}
         />
         <StatCard 
           title="Daily Active Users" 
@@ -132,6 +133,7 @@ const UserEngagementReport = () => {
           accentColor="green.400"
           bg={cardBg}
           borderColor={borderColor}
+          timeFrame={DATE_RANGES.LAST_1_DAY}
         />
         <StatCard 
           title="Acceptance Rate" 
@@ -140,14 +142,16 @@ const UserEngagementReport = () => {
           accentColor="purple.400"
           bg={cardBg}
           borderColor={borderColor}
+          timeFrame={reportDateRange}
         />
         <StatCard 
           title="Total Suggestions" 
           value={formatNumber(metrics.totalSuggestions)}
-          helpText={`Over the last ${reportDateRange}`}
+          helpText="Number of code suggestions offered"
           accentColor="orange.400"
           bg={cardBg}
           borderColor={borderColor}
+          timeFrame={reportDateRange}
         />
       </SimpleGrid>
       
@@ -161,6 +165,8 @@ const UserEngagementReport = () => {
             description="Overview of active users and suggestions"
             bg={cardBg}
             borderColor={borderColor}
+            timeFrame={reportDateRange}
+            accentColor="blue.400"
           >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={engagementData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -189,6 +195,8 @@ const UserEngagementReport = () => {
             description="Ratio of accepted to rejected suggestions"
             bg={cardBg}
             borderColor={borderColor}
+            timeFrame={reportDateRange}
+            accentColor="purple.400"
           >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>

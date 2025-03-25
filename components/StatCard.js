@@ -9,9 +9,12 @@ import {
   Flex, 
   Icon, 
   Tooltip, 
-  useColorModeValue 
+  useColorModeValue,
+  Badge,
+  Text
 } from '@chakra-ui/react';
-import { InfoIcon } from '@chakra-ui/icons';
+import { InfoIcon, TimeIcon } from '@chakra-ui/icons';
+import { DATE_RANGES } from '../lib/config';
 
 const StatCard = ({ 
   title, 
@@ -24,6 +27,7 @@ const StatCard = ({
   accentColor = 'brand.500',
   bg,
   borderColor,
+  timeFrame,
   ...rest 
 }) => {
   // Default values if not provided
@@ -33,6 +37,36 @@ const StatCard = ({
   const valueColor = useColorModeValue('gray.800', 'white');
   const helpTextColor = useColorModeValue('gray.500', 'gray.400');
   const accentLightColor = accentColor.replace('500', '200');
+  const badgeBg = useColorModeValue('gray.100', 'gray.700');
+  const badgeColor = useColorModeValue('gray.600', 'gray.300');
+
+  // Get a proper time frame label if available
+  const getTimeFrameLabel = () => {
+    if (!timeFrame) return null;
+    
+    let label = '';
+    if (timeFrame === DATE_RANGES.LAST_1_DAY) {
+      label = 'Daily';
+    } else if (timeFrame === DATE_RANGES.LAST_7_DAYS) {
+      label = '7-day period';
+    } else if (timeFrame === DATE_RANGES.LAST_14_DAYS) {
+      label = '14-day period';
+    } else if (timeFrame === DATE_RANGES.LAST_28_DAYS) {
+      label = '28-day period';
+    } else {
+      // Try to extract just the number if it's in the format "X days"
+      const match = timeFrame.match(/^(\d+)/);
+      if (match && match[1]) {
+        label = `${match[1]}-day period`;
+      } else {
+        label = timeFrame;
+      }
+    }
+    
+    return label;
+  };
+  
+  const timeFrameLabel = getTimeFrameLabel();
 
   return (
     <Box
@@ -63,14 +97,39 @@ const StatCard = ({
       />
       <Stat>
         <Flex justify="space-between" mb={3} align="center">
-          <StatLabel 
-            fontSize="md" 
-            color={labelColor} 
-            fontWeight="semibold"
-            letterSpacing="tight"
-          >
-            {title}
-          </StatLabel>
+          <Flex direction="column" gap={1}>
+            <StatLabel 
+              fontSize="md" 
+              color={labelColor} 
+              fontWeight="semibold"
+              letterSpacing="tight"
+            >
+              {title}
+            </StatLabel>
+            
+            {/* Time frame badge */}
+            {timeFrameLabel && (
+              <Badge 
+                variant="subtle" 
+                colorScheme="gray" 
+                fontSize="xs" 
+                borderRadius="full"
+                px={2}
+                py={0.5}
+                bg={badgeBg}
+                color={badgeColor}
+                display="flex"
+                alignItems="center"
+                width="fit-content"
+              >
+                <Icon as={TimeIcon} mr={1} boxSize="0.7em" />
+                <Text fontSize="xs" fontWeight="medium">
+                  {timeFrameLabel}
+                </Text>
+              </Badge>
+            )}
+          </Flex>
+          
           <Flex>
             {infoTooltip && (
               <Tooltip 

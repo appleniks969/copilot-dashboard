@@ -1,6 +1,7 @@
 import React from 'react';
-import { Box, Heading, Text, Flex, Tooltip, useColorModeValue } from '@chakra-ui/react';
-import { InfoIcon } from '@chakra-ui/icons';
+import { Box, Heading, Text, Flex, Tooltip, useColorModeValue, Badge, Icon } from '@chakra-ui/react';
+import { InfoIcon, TimeIcon } from '@chakra-ui/icons';
+import { DATE_RANGES } from '../lib/config';
 
 const ChartCard = ({ 
   title, 
@@ -10,6 +11,7 @@ const ChartCard = ({
   bg,
   borderColor,
   accentColor = 'brand.500',
+  timeFrame,
   ...rest 
 }) => {
   // Default values if not provided
@@ -18,6 +20,36 @@ const ChartCard = ({
   const titleColor = useColorModeValue('gray.700', 'white');
   const descColor = useColorModeValue('gray.600', 'gray.300');
   const accentLightColor = accentColor.replace('500', '200');
+  const badgeBg = useColorModeValue('gray.100', 'gray.700');
+  const badgeColor = useColorModeValue('gray.600', 'gray.300');
+
+  // Get a proper time frame label if available
+  const getTimeFrameLabel = () => {
+    if (!timeFrame) return null;
+    
+    let label = '';
+    if (timeFrame === DATE_RANGES.LAST_1_DAY) {
+      label = 'Daily';
+    } else if (timeFrame === DATE_RANGES.LAST_7_DAYS) {
+      label = '7-day period';
+    } else if (timeFrame === DATE_RANGES.LAST_14_DAYS) {
+      label = '14-day period';
+    } else if (timeFrame === DATE_RANGES.LAST_28_DAYS) {
+      label = '28-day period';
+    } else {
+      // Try to extract just the number if it's in the format "X days"
+      const match = timeFrame.match(/^(\d+)/);
+      if (match && match[1]) {
+        label = `${match[1]}-day period`;
+      } else {
+        label = timeFrame;
+      }
+    }
+    
+    return label;
+  };
+  
+  const timeFrameLabel = getTimeFrameLabel();
 
   return (
     <Box
@@ -49,15 +81,42 @@ const ChartCard = ({
         height="5px" 
         bgGradient={`linear(to-r, ${accentColor}, ${accentLightColor})`}
       />
-      <Flex justify="space-between" align="center" mb={3}>
-        <Heading 
-          size="md" 
-          color={titleColor}
-          fontWeight="bold"
-          letterSpacing="tight"
-        >
-          {title}
-        </Heading>
+      <Flex justify="space-between" align="flex-start" mb={3}>
+        <Box>
+          <Heading 
+            size="md" 
+            color={titleColor}
+            fontWeight="bold"
+            letterSpacing="tight"
+            mb={1}
+          >
+            {title}
+          </Heading>
+          
+          {/* Time frame badge */}
+          {timeFrameLabel && (
+            <Badge 
+              variant="subtle" 
+              colorScheme="gray" 
+              fontSize="xs" 
+              borderRadius="full"
+              px={2}
+              py={0.5}
+              bg={badgeBg}
+              color={badgeColor}
+              display="flex"
+              alignItems="center"
+              width="fit-content"
+              mb={2}
+            >
+              <Icon as={TimeIcon} mr={1} boxSize="0.7em" />
+              <Text fontSize="xs" fontWeight="medium">
+                {timeFrameLabel}
+              </Text>
+            </Badge>
+          )}
+        </Box>
+        
         {infoTooltip && (
           <Tooltip 
             label={infoTooltip} 
