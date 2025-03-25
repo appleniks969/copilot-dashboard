@@ -50,7 +50,8 @@ const LanguageEditorReport = () => {
   const languageData = metrics.languages && metrics.languages.length > 0
     ? metrics.languages.map(lang => ({
         name: lang.name,
-        value: Math.max(0, lang.total_suggestions || 0), // Ensure non-negative values
+        // Use raw_total_suggestions if available (for time period normalization), otherwise fall back to total_suggestions
+        value: Math.max(0, lang.raw_total_suggestions || lang.total_suggestions || 0),
         acceptanceRate: lang.total_suggestions > 0 
           ? Math.min(100, Math.max(0, (lang.total_acceptances / lang.total_suggestions) * 100)) 
           : 0
@@ -61,7 +62,8 @@ const LanguageEditorReport = () => {
   const editorData = metrics.editors && metrics.editors.length > 0
     ? metrics.editors.map(editor => ({
         name: editor.name,
-        value: Math.max(0, editor.total_suggestions || 0), // Ensure non-negative values
+        // Use raw_total_suggestions if available (for time period normalization), otherwise fall back to total_suggestions
+        value: Math.max(0, editor.raw_total_suggestions || editor.total_suggestions || 0),
         acceptanceRate: editor.total_suggestions > 0 
           ? Math.min(100, Math.max(0, (editor.total_acceptances / editor.total_suggestions) * 100))
           : 0

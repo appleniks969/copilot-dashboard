@@ -54,7 +54,7 @@ import { CHART_COLORS, TEAMS_LIST } from '../../lib/config';
 import { formatNumber, formatPercentage, formatCurrency } from '../../lib/utils';
 
 const TeamComparisonReport = () => {
-  const { team, orgData, metrics, multiTeamData, dateRange } = useCopilot();
+  const { team, orgData, metrics, multiTeamData, dateRange, extractDaysFromDateRange } = useCopilot();
   
   // Always show team comparison view if we have multi-team data
   const hasMultiTeamData = multiTeamData && multiTeamData.length > 0;

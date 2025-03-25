@@ -34,7 +34,7 @@ import { CHART_COLORS, ROI_DEFAULTS } from '../../lib/config';
 import { formatNumber, formatPercentage, formatCurrency } from '../../lib/utils';
 
 const ROIReport = () => {
-  const { metrics, totalLicensedUsers, dateRange } = useCopilot();
+  const { metrics, totalLicensedUsers, dateRange, extractDaysFromDateRange } = useCopilot();
   
   if (!metrics || !metrics.roi) {
     return (
@@ -50,10 +50,13 @@ const ROIReport = () => {
     { name: 'Cost', value: totalLicensedUsers * ROI_DEFAULTS.licenseCostPerMonth },
   ];
 
+  // Get number of days from dateRange using the helper function
+  const days = extractDaysFromDateRange(dateRange);
+
   // Monthly projection
   const monthlyProjection = {
-    hoursSaved: metrics.roi.hoursSaved * (30 / parseInt(dateRange)),
-    moneySaved: metrics.roi.moneySaved * (30 / parseInt(dateRange)),
+    hoursSaved: metrics.roi.hoursSaved * (30 / days),
+    moneySaved: metrics.roi.moneySaved * (30 / days),
     licenseCost: totalLicensedUsers * ROI_DEFAULTS.licenseCostPerMonth,
   };
 
