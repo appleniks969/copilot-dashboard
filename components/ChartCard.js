@@ -23,30 +23,9 @@ const ChartCard = ({
   const badgeBg = useColorModeValue('gray.100', 'gray.700');
   const badgeColor = useColorModeValue('gray.600', 'gray.300');
 
-  // Get a proper time frame label if available
+  // Always show a consistent message about using all available data
   const getTimeFrameLabel = () => {
-    if (!timeFrame) return null;
-    
-    let label = '';
-    if (timeFrame === DATE_RANGES.LAST_1_DAY) {
-      label = 'Daily';
-    } else if (timeFrame === DATE_RANGES.LAST_7_DAYS) {
-      label = '7-day period';
-    } else if (timeFrame === DATE_RANGES.LAST_14_DAYS) {
-      label = '14-day period';
-    } else if (timeFrame === DATE_RANGES.LAST_28_DAYS) {
-      label = '28-day period';
-    } else {
-      // Try to extract just the number if it's in the format "X days"
-      const match = timeFrame.match(/^(\d+)/);
-      if (match && match[1]) {
-        label = `${match[1]}-day period`;
-      } else {
-        label = timeFrame;
-      }
-    }
-    
-    return label;
+    return 'All Available Data (28 Days)';
   };
   
   const timeFrameLabel = getTimeFrameLabel();

@@ -61,7 +61,7 @@ const RawDataReport = () => {
             <Text>{metaInfo.teamSlug}</Text>
 
             <Text fontWeight="bold" mt={2}>Date Range:</Text>
-            <Text>Last {metaInfo.dateRange}</Text>
+            <Text>All Available Data (28 Days)</Text>
           </Box>
           
           <Box>
@@ -185,7 +185,7 @@ const Dashboard = () => {
                 boxShadow="sm"
                 fontWeight="medium"
               >
-                Last {dateRange}
+                All Available Data (28 Days)
               </Badge>
             </Flex>
           </Box>

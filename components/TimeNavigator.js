@@ -158,112 +158,23 @@ const TimeNavigator = ({
       mb={6}
     >
       <Flex justify="space-between" direction={{ base: 'column', md: 'row' }} gap={4}>
-        {/* Time range selector buttons */}
+        {/* Fixed time period message */}
         <Flex direction="column" gap={2}>
           <Text fontWeight="medium" color={mutedTextColor} fontSize="sm">Time Period</Text>
-          <ButtonGroup 
-            size="md" 
-            isAttached 
-            variant="outline"
-            borderRadius="lg"
-            boxShadow="sm"
+          <Flex 
+            align="center" 
+            bg="blue.50" 
+            color="blue.700" 
+            fontWeight="medium" 
+            px={4} 
+            py={2} 
+            borderRadius="lg" 
+            borderWidth="1px" 
+            borderColor="blue.200"
           >
-            {predefinedRanges.map((range) => (
-              <Popover
-                key={range.id}
-                trigger="hover"
-                placement="bottom"
-                isLazy
-                openDelay={300}
-              >
-                <PopoverTrigger>
-                  <Button
-                    leftIcon={<Icon as={range.icon} />}
-                    onClick={() => setDateRange(range.id)}
-                    bg={dateRange === range.id ? selectedBgColor : 'transparent'}
-                    borderColor={borderColor}
-                    color={dateRange === range.id ? 'blue.500' : textColor}
-                    fontWeight={dateRange === range.id ? 'bold' : 'medium'}
-                    _hover={{ bg: hoverBgColor }}
-                    position="relative"
-                  >
-                    {range.label}
-                    {dateRange === range.id && (
-                      <Box
-                        position="absolute"
-                        bottom="-1px"
-                        left="50%"
-                        transform="translateX(-50%)"
-                        w="40%"
-                        h="2px"
-                        bg="blue.500"
-                        borderRadius="full"
-                      />
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  w="240px"
-                  shadow="lg"
-                  borderColor={borderColor}
-                  bg={bgColor}
-                >
-                  <PopoverArrow bg={bgColor} />
-                  <PopoverBody p={3}>
-                    <Text fontWeight="bold" mb={1}>{range.longLabel}</Text>
-                    <Box h="80px" mb={2}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={previewData[range.id]}>
-                          <XAxis dataKey="day" hide={true} />
-                          <RechartsTooltip 
-                            content={({ active, payload }) => {
-                              if (active && payload && payload.length) {
-                                return (
-                                  <Box 
-                                    bg={bgColor} 
-                                    p={1} 
-                                    borderRadius="md" 
-                                    borderWidth="1px"
-                                    borderColor={borderColor}
-                                    fontSize="xs"
-                                  >
-                                    <Text fontWeight="bold">{payload[0].value}</Text>
-                                  </Box>
-                                );
-                              }
-                              return null;
-                            }}
-                          />
-                          <Area 
-                            type="monotone" 
-                            dataKey="value" 
-                            stroke={chartLineColor} 
-                            fill={chartFillColor}
-                            strokeWidth={2}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </Box>
-                    <Stat size="sm">
-                      <StatLabel fontSize="xs">Average Value</StatLabel>
-                      <Flex align="center" justify="space-between">
-                        <StatNumber fontSize="md">
-                          {getMetricSummary(range.id).value}
-                        </StatNumber>
-                        <StatHelpText mb={0} fontSize="xs">
-                          <StatArrow 
-                            type={getMetricSummary(range.id).direction}
-                            color={getMetricSummary(range.id).direction === 'increase' ? 'green.500' : 'red.500'} 
-                          />
-                          {getMetricSummary(range.id).change}%
-                        </StatHelpText>
-                      </Flex>
-                    </Stat>
-                  </PopoverBody>
-                </PopoverContent>
-              </Popover>
-            ))}
-          </ButtonGroup>
+            <CalendarIcon mr={2} />
+            <Text>Showing All Available Data (Last 28 Days)</Text>
+          </Flex>
         </Flex>
         
         {/* Advanced options */}
@@ -278,27 +189,17 @@ const TimeNavigator = ({
           >
             Refresh
           </Button>
-          
-          <Button
-            rightIcon={<Icon as={InfoIcon} boxSize={3} />}
-            colorScheme="purple"
-            variant={compareWithPrevious ? "solid" : "outline"}
-            size="md"
-            onClick={() => setCompareWithPrevious(!compareWithPrevious)}
-          >
-            Compare with Previous
-          </Button>
         </Flex>
       </Flex>
       
       {/* Date range indicator */}
       <Flex mt={5} direction="column" gap={1}>
         <Flex justify="space-between" align="center" width="100%">
-          <Text fontSize="sm" color={mutedTextColor}>Past</Text>
+          <Text fontSize="sm" color={mutedTextColor}>28 Days Ago</Text>
           <Text fontSize="sm" color={textColor} fontWeight="medium">
-            {currentRange.longLabel}
+            All Available Data
           </Text>
-          <Text fontSize="sm" color={mutedTextColor}>Now</Text>
+          <Text fontSize="sm" color={mutedTextColor}>Today</Text>
         </Flex>
         
         {/* Range slider (decorative in this version) */}
@@ -331,7 +232,7 @@ const TimeNavigator = ({
         >
           <TimeIcon boxSize={3} />
           <Text fontSize="xs">
-            {currentRange.longLabel}
+            Last 28 Days (All Available Data)
           </Text>
         </Badge>
       </Flex>

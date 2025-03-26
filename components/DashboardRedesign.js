@@ -161,15 +161,9 @@ const DashboardRedesign = () => {
   const totalSuggestions = metrics?.totalSuggestions || 1950;
   const acceptedLines = metrics?.acceptedLines || 32500;
   
-  // Current time period for display
+  // Current time period for display - always showing all available data
   const getCurrentTimePeriod = () => {
-    switch (dateRange) {
-      case DATE_RANGES.LAST_1_DAY: return 'Daily';
-      case DATE_RANGES.LAST_7_DAYS: return '7-day period';
-      case DATE_RANGES.LAST_14_DAYS: return '14-day period';
-      case DATE_RANGES.LAST_28_DAYS: return '28-day period';
-      default: return dateRange;
-    }
+    return 'All Available Data (28 Days)';
   };
   
   return (
@@ -194,10 +188,10 @@ const DashboardRedesign = () => {
         </HStack>
       </Flex>
       
-      {/* Advanced Time Navigator */}
+      {/* Time display - always shows all available data */}
       <TimeNavigator 
         dateRange={dateRange}
-        setDateRange={setDateRange}
+        setDateRange={() => {}} // No-op function since we don't allow changing date range
         compareWithPrevious={compareWithPrevious}
         setCompareWithPrevious={setCompareWithPrevious}
         onRefresh={() => console.log('Refreshing data...')}

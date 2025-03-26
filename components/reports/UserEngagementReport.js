@@ -44,25 +44,16 @@ const UserEngagementReport = () => {
   const reportId = 'userEngagement';
   const [reportDateRange, setReportDateRange] = useState(dateRanges[reportId] || DATE_RANGES.LAST_28_DAYS);
   
-  // Use a ref to track if this is the initial render
-  const initialRenderRef = useRef(true);
-  
-  // Only update date range in context if it's not the initial render or if the date has changed
-  useEffect(() => {
-    // Skip the initial render which would cause an unnecessary API call
-    if (initialRenderRef.current) {
-      initialRenderRef.current = false;
-      return;
-    }
-    
-    // Only update if the date range has actually changed from what's in context
-    if (reportDateRange !== dateRanges[reportId]) {
-      updateReportDateRange(reportId, reportDateRange);
-    }
-  }, [reportDateRange, reportId, dateRanges, updateReportDateRange]);
-  
   // Get metrics specific to this report's date range
   const metrics = getMetricsForReport(reportId);
+  
+  // We're always using the 28-day range, so we only need to load data once on initial render
+  useEffect(() => {
+    // Make sure we have current data loaded
+    if (!dateRanges[reportId]) {
+      updateReportDateRange(reportId, DATE_RANGES.LAST_28_DAYS);
+    }
+  }, [reportId, dateRanges, updateReportDateRange]);
   
   if (!metrics) {
     return (
@@ -103,11 +94,17 @@ const UserEngagementReport = () => {
         </Heading>
         
         <Box>
-          <DateRangeFilter 
-            dateRange={reportDateRange}
-            setDateRange={setReportDateRange}
-            compact={true}
-          />
+          <Badge 
+            colorScheme="blue" 
+            fontSize="sm" 
+            px={3} 
+            py={1} 
+            borderRadius="full"
+            boxShadow="sm"
+            fontWeight="medium"
+          >
+            All Available Data (28 Days)
+          </Badge>
         </Box>
       </Flex>
       
@@ -133,7 +130,6 @@ const UserEngagementReport = () => {
           accentColor="green.400"
           bg={cardBg}
           borderColor={borderColor}
-          timeFrame={DATE_RANGES.LAST_1_DAY}
         />
         <StatCard 
           title="Acceptance Rate" 

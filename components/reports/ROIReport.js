@@ -77,7 +77,7 @@ const ROIReport = () => {
         <StatCard 
           title="ROI" 
           value={formatPercentage(metrics.roi.roiPercentage)}
-          helpText={`For the last ${dateRange}`}
+          helpText="For All Available Data (28 Days)"
           infoTooltip={`ROI = (Money Saved ÷ License Cost - 1) × 100%. 
 Money Saved = ${formatCurrency(metrics.roi.moneySaved)}
 License Cost = ${formatCurrency(totalLicensedUsers * ROI_DEFAULTS.licenseCostPerMonth)}

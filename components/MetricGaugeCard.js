@@ -193,24 +193,23 @@ const MetricGaugeCard = ({
             )}
           </Heading>
           
-          {/* Time period badge */}
-          {timeFrame && (
-            <Badge
-              colorScheme={scheme}
-              variant="subtle"
-              fontSize="xs"
-              borderRadius="full"
-              px={2}
-              py={0.5}
-              width="fit-content"
-              display="flex"
-              alignItems="center"
-              gap={1}
-            >
-              <TimeIcon boxSize="0.6em" />
-              <Text>{timeFrameLabel || timeFrame}</Text>
-            </Badge>
-          )}
+          {/* Time period badge - fixed to show All Available Data */}
+          <Badge
+            colorScheme={scheme}
+            variant="subtle"
+            fontSize="xs"
+            borderRadius="full"
+            px={2}
+            py={0.5}
+            width="fit-content"
+            display="flex"
+            alignItems="center"
+            gap={1}
+          >
+            <TimeIcon boxSize="0.6em" />
+            <Text>All Available Data (28 Days)</Text>
+          </Badge>
+          
         </Flex>
         
         {/* Impact score indicator */}

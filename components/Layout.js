@@ -49,30 +49,28 @@ const Layout = ({ children, title = 'GitHub Copilot Usage Dashboard' }) => {
               </Text>
               
               <HStack spacing={4}>
-                <Link href="/" passHref>
-                  <Button 
-                    as="a"
-                    variant={router.pathname === '/' ? "solid" : "ghost"}
-                    colorScheme={router.pathname === '/' ? "blue" : "gray"}
-                    size="sm"
-                  >
-                    Standard
-                  </Button>
-                </Link>
+                <Button 
+                  as={Link}
+                  href="/"
+                  variant={router.pathname === '/' ? "solid" : "ghost"}
+                  colorScheme={router.pathname === '/' ? "blue" : "gray"}
+                  size="sm"
+                >
+                  Standard
+                </Button>
                 
-                <Link href="/redesign" passHref>
-                  <Button 
-                    as="a"
-                    variant={router.pathname === '/redesign' ? "solid" : "ghost"}
-                    colorScheme={router.pathname === '/redesign' ? "blue" : "gray"}
-                    size="sm"
-                  >
-                    Redesign
-                    <Badge ml={2} colorScheme="green" variant="solid" fontSize="0.6em">
-                      NEW
-                    </Badge>
-                  </Button>
-                </Link>
+                <Button 
+                  as={Link}
+                  href="/redesign"
+                  variant={router.pathname === '/redesign' ? "solid" : "ghost"}
+                  colorScheme={router.pathname === '/redesign' ? "blue" : "gray"}
+                  size="sm"
+                >
+                  Redesign
+                  <Badge ml={2} colorScheme="green" variant="solid" fontSize="0.6em">
+                    NEW
+                  </Badge>
+                </Button>
               </HStack>
             </Flex>
           </Container>
