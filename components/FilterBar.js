@@ -130,7 +130,7 @@ const FilterBar = () => {
               />
             )}
             <Text fontSize="xs" color={textColor} mt={1} opacity={0.8}>
-              Team data will be shown for the selected team.
+              A team must be selected to view data.
             </Text>
           </FormControl>
         </Stack>

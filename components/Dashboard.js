@@ -11,20 +11,20 @@ import { useCopilot } from '../lib/CopilotContext';
 
 // Raw Data component to display the raw API data
 const RawDataReport = () => {
-  const { rawData, orgData, metrics, team, dateRange } = useCopilot();
+  const { rawData, teamData, metrics, team, dateRange } = useCopilot();
   
-  if (!rawData) {
+  if (!rawData || !team) {
     return (
       <Box p={4}>
-        <Text>No raw data available.</Text>
+        <Text>No raw data available. Please select a team to view data.</Text>
       </Box>
     );
   }
   
   // Extract useful metadata to display along with raw data
   const metaInfo = {
-    dataSource: metrics?.dataSource || 'unknown',
-    teamSlug: team || 'organization level',
+    dataSource: 'team',
+    teamSlug: team,
     dateRange: dateRange,
     processed: {
       activeUsers: metrics?.totalActiveUsers || 0,
@@ -33,14 +33,14 @@ const RawDataReport = () => {
       languages: metrics?.languages?.length || 0,
       editors: metrics?.editors?.length || 0
     },
-    dataPoints: orgData?.dataPoints || (Array.isArray(rawData) ? rawData.length : 1),
-    processedDays: orgData?.processedDays || 0
+    dataPoints: Array.isArray(rawData) ? rawData.length : 1,
+    processedDays: teamData?.processedDays || 0
   };
   
   return (
     <Box>
-      <Heading size="lg" mb={6}>Raw API Data</Heading>
-      <Text mb={6}>This view shows the raw data returned from the GitHub Copilot API for debugging and verification purposes.</Text>
+      <Heading size="lg" mb={6}>Team Raw API Data</Heading>
+      <Text mb={6}>This view shows the raw data returned from the GitHub Copilot API for team: <strong>{team}</strong>.</Text>
       
       {/* Data validation summary */}
       <Box 
@@ -54,25 +54,25 @@ const RawDataReport = () => {
         <Heading size="md" mb={3}>Data Validation Summary</Heading>
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
           <Box>
-            <Text fontWeight="bold">Data Source:</Text>
-            <Text>{metaInfo.dataSource}</Text>
-
-            <Text fontWeight="bold" mt={2}>Team:</Text>
+            <Text fontWeight="bold">Team:</Text>
             <Text>{metaInfo.teamSlug}</Text>
 
             <Text fontWeight="bold" mt={2}>Date Range:</Text>
             <Text>All Available Data (28 Days)</Text>
+            
+            <Text fontWeight="bold" mt={2}>Data Source:</Text>
+            <Text>GitHub Copilot Team Analytics API</Text>
           </Box>
           
           <Box>
             <Text fontWeight="bold">Processed Data Points:</Text>
-            <Text>{metaInfo.dataPoints} (days processed: {metaInfo.processedDays})</Text>
+            <Text>{metaInfo.dataPoints} days of data</Text>
             
-            <Text fontWeight="bold" mt={2}>Processed Metrics:</Text>
-            <Text>Users: {metaInfo.processed.activeUsers}, Suggestions: {metaInfo.processed.totalSuggestions}, Accepted: {metaInfo.processed.acceptedSuggestions}</Text>
+            <Text fontWeight="bold" mt={2}>User Metrics:</Text>
+            <Text>Active Users: {metaInfo.processed.activeUsers}, Engaged Users: {metrics?.totalEngagedUsers || 0}</Text>
             
-            <Text fontWeight="bold" mt={2}>Data Categories:</Text>
-            <Text>Languages: {metaInfo.processed.languages}, Editors: {metaInfo.processed.editors}</Text>
+            <Text fontWeight="bold" mt={2}>Suggestion Metrics:</Text>
+            <Text>Suggestions: {metaInfo.processed.totalSuggestions}, Accepted: {metaInfo.processed.acceptedSuggestions}</Text>
           </Box>
         </SimpleGrid>
       </Box>
@@ -108,6 +108,16 @@ const Dashboard = () => {
 
   if (!authToken) {
     return null; // AuthForm will be shown in parent component
+  }
+  
+  if (!team) {
+    return (
+      <Box p={8} borderRadius="xl" bg="white" boxShadow="lg" textAlign="center">
+        <Heading size="lg" mb={4}>Please Select a Team</Heading>
+        <Text mb={6}>A team must be selected to view Copilot usage data.</Text>
+        <FilterBar />
+      </Box>
+    );
   }
 
   const bgColor = useColorModeValue('white', 'gray.800');

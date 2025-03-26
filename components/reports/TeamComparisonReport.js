@@ -407,9 +407,8 @@ const TeamComparisonReport = () => {
     );
   }
   
-  // Fallback to the original single team view if no multi-team data
-  if (!hasLanguageComparison && !hasEditorComparison) {
-    // If we don't have enough data, show the info message
+  // If we don't have multi-team data, show a message that team selection is required
+  if (!hasMultiTeamData) {
     return (
       <Box>
         <Heading size="lg" mb={6}>{reportTitle}</Heading>
@@ -417,30 +416,26 @@ const TeamComparisonReport = () => {
         <Alert status="info" borderRadius="md" mb={6}>
           <AlertIcon />
           <Box>
-            <AlertTitle mb={2}>Limited Data Available</AlertTitle>
+            <AlertTitle mb={2}>Team Data Required</AlertTitle>
             <AlertDescription>
-              {team ? 
-                `We don't have detailed language and editor breakdowns for team: ${team}.` :
-                `We don't have detailed language and editor breakdowns for this organization.`
-              }
+              Please select at least one team from the filter above to view team comparison data.
             </AlertDescription>
           </Box>
         </Alert>
         
         <VStack align="start" spacing={4} p={5} bg="white" borderRadius="md" shadow="sm">
           <Text>
-            This report is designed to show language and editor usage breakdowns across your {team ? "team" : "organization"}.
-            Unfortunately, the current API response doesn't include this detailed data.
+            This report requires team data to generate comparisons between teams.
           </Text>
           
           <Text>
-            Possible reasons:
+            To view this report:
           </Text>
           
           <Box pl={4}>
-            <Text>• Your GitHub token may not have sufficient permissions</Text>
-            <Text>• There may not be enough Copilot usage data available yet</Text>
-            <Text>• The API may have changed or may not be returning the expected data format</Text>
+            <Text>• Make sure a team is selected in the filter bar</Text>
+            <Text>• Ensure your GitHub token has sufficient permissions</Text>
+            <Text>• Configure multiple teams in the TEAMS_LIST config to enable comparison</Text>
           </Box>
           
           <Button
