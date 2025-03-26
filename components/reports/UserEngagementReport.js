@@ -80,8 +80,7 @@ const UserEngagementReport = () => {
   const userEngagementData = [
     { name: 'Active Users', value: metrics.totalActiveUsers || 0 },
     { name: 'Engaged Users', value: metrics.totalEngagedUsers || 0 },
-    { name: 'Accepted Suggestions', value: metrics.acceptedSuggestions || 0 },
-    { name: 'Total Suggestions', value: metrics.totalSuggestions || 0 },
+    { name: 'Daily Active', value: metrics.dailyActiveUsers || 0 },
   ];
   
   // Create data for acceptance rate pie chart
@@ -89,6 +88,14 @@ const UserEngagementReport = () => {
     { name: 'Accepted', value: metrics.acceptedSuggestions || 0 },
     { name: 'Not Accepted', value: (metrics.totalSuggestions || 0) - (metrics.acceptedSuggestions || 0) },
   ];
+  
+  // Create data for feature usage
+  const featureUsageData = engagementData ? [
+    { name: 'Code Completions', value: engagementData.what.ide_completions.users || 0 },
+    { name: 'IDE Chat', value: engagementData.what.ide_chat.users || 0 },
+    { name: 'GitHub Chat', value: engagementData.what.dotcom_chat.users || 0 },
+    { name: 'PR Summaries', value: engagementData.what.pull_requests.users || 0 },
+  ] : [];
   
   const cardBg = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -301,21 +308,21 @@ const UserEngagementReport = () => {
             <TabPanel>
               <Box mb={6}>
                 <Text mb={4}>
-                  This shows which Copilot features your team is using, including code completions, 
-                  chat, and pull request summaries.
+                  Your team uses several Copilot features. Here's a breakdown of which features are most popular
+                  and how many team members are engaging with each one.
                 </Text>
                 
                 <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6}>
                   <GridItem>
                     <ChartCard 
-                      title="Feature Usage by Users" 
-                      description="Number of users engaged with each Copilot feature"
+                      title="Feature Usage" 
+                      description="Users engaging with each Copilot feature"
                       bg={cardBg}
                       borderColor={borderColor}
                       accentColor="blue.400"
                     >
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={whatData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <BarChart data={featureUsageData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                           <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                           <XAxis dataKey="name" />
                           <YAxis />
@@ -329,7 +336,7 @@ const UserEngagementReport = () => {
                             }}
                           />
                           <Legend />
-                          <Bar dataKey="value" fill={CHART_COLORS.primary} name="Engaged Users" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="value" fill={CHART_COLORS.primary} name="Users" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </ChartCard>
@@ -337,12 +344,12 @@ const UserEngagementReport = () => {
                   
                   <GridItem>
                     <Box p={5} borderWidth="1px" borderRadius="lg" borderColor={borderColor} bg={cardBg}>
-                      <Heading size="sm" mb={4}>Feature Engagement Details</Heading>
+                      <Heading size="sm" mb={4}>Feature Usage Details</Heading>
                       <Table size="sm" variant="simple">
                         <Thead>
                           <Tr>
                             <Th>Feature</Th>
-                            <Th isNumeric>Engaged Users</Th>
+                            <Th isNumeric>Users</Th>
                             <Th isNumeric>% of Total</Th>
                           </Tr>
                         </Thead>
@@ -362,12 +369,15 @@ const UserEngagementReport = () => {
                       {engagementData && engagementData.what.ide_completions.details.languages && (
                         <>
                           <Divider my={4} />
-                          <Heading size="sm" mb={4}>Top Languages</Heading>
+                          <Heading size="sm" mb={4}>Programming Languages Used</Heading>
+                          <Text fontSize="sm" mb={3}>
+                            Languages your team uses with Copilot code completions:
+                          </Text>
                           <Table size="sm" variant="simple">
                             <Thead>
                               <Tr>
                                 <Th>Language</Th>
-                                <Th isNumeric>Engaged Users</Th>
+                                <Th isNumeric>Users</Th>
                               </Tr>
                             </Thead>
                             <Tbody>
@@ -391,14 +401,15 @@ const UserEngagementReport = () => {
             <TabPanel>
               <Box mb={6}>
                 <Text mb={4}>
-                  This shows where your team is using Copilot, including which editors and repositories.
+                  Copilot is used across different development environments. This breakdown shows where your 
+                  team members are leveraging Copilot in their daily workflows.
                 </Text>
                 
                 <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6}>
                   <GridItem>
                     <ChartCard 
-                      title="Where Copilot is Used" 
-                      description="Engagement across tools and repositories"
+                      title="Development Environments" 
+                      description="Where your team uses Copilot"
                       bg={cardBg}
                       borderColor={borderColor}
                       accentColor="green.400"
@@ -418,7 +429,7 @@ const UserEngagementReport = () => {
                             }}
                           />
                           <Legend />
-                          <Bar dataKey="value" fill={CHART_COLORS.tertiary} name="Engaged Users" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="value" fill={CHART_COLORS.tertiary} name="Users" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </ChartCard>
@@ -426,12 +437,15 @@ const UserEngagementReport = () => {
                   
                   <GridItem>
                     <Box p={5} borderWidth="1px" borderRadius="lg" borderColor={borderColor} bg={cardBg}>
-                      <Heading size="sm" mb={4}>Editors</Heading>
+                      <Heading size="sm" mb={4}>IDE Usage</Heading>
+                      <Text fontSize="sm" mb={3}>
+                        Code editors where your team is using Copilot:
+                      </Text>
                       <Table size="sm" variant="simple">
                         <Thead>
                           <Tr>
                             <Th>Editor</Th>
-                            <Th isNumeric>Engaged Users</Th>
+                            <Th isNumeric>Users</Th>
                             <Th isNumeric>Models</Th>
                           </Tr>
                         </Thead>
@@ -449,12 +463,15 @@ const UserEngagementReport = () => {
                       {engagementData && Object.keys(engagementData.where.repositories).length > 0 && (
                         <>
                           <Divider my={4} />
-                          <Heading size="sm" mb={4}>Repositories</Heading>
+                          <Heading size="sm" mb={4}>Repository Usage</Heading>
+                          <Text fontSize="sm" mb={3}>
+                            GitHub repositories where your team uses Copilot:
+                          </Text>
                           <Table size="sm" variant="simple">
                             <Thead>
                               <Tr>
                                 <Th>Repository</Th>
-                                <Th isNumeric>Engaged Users</Th>
+                                <Th isNumeric>Users</Th>
                                 <Th isNumeric>PR Summaries</Th>
                               </Tr>
                             </Thead>
@@ -483,14 +500,15 @@ const UserEngagementReport = () => {
             <TabPanel>
               <Box mb={6}>
                 <Text mb={4}>
-                  This shows how your team is using Copilot, including interaction patterns and efficiency metrics.
+                  Here's how your team interacts with Copilot. These metrics show you the effectiveness 
+                  of your Copilot usage and highlight opportunities for improvement.
                 </Text>
                 
-                <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap={6}>
+                <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6}>
                   <GridItem>
                     <ChartCard 
                       title="Suggestion Acceptance Rate" 
-                      description="Ratio of accepted to rejected suggestions"
+                      description="How often Copilot suggestions are accepted"
                       bg={cardBg}
                       borderColor={borderColor}
                       accentColor="purple.400"
@@ -531,19 +549,22 @@ const UserEngagementReport = () => {
                   
                   <GridItem>
                     <Box p={5} borderWidth="1px" borderRadius="lg" borderColor={borderColor} bg={cardBg}>
-                      <Heading size="sm" mb={4}>How Teams Use Copilot</Heading>
+                      <Heading size="sm" mb={4}>Usage Statistics</Heading>
                       
                       <SimpleGrid columns={1} spacing={4}>
                         <Box>
                           <Text fontWeight="medium" fontSize="sm" color="gray.500">Code Completions</Text>
+                          <Text fontSize="sm" mb={2}>
+                            How your team is using inline code suggestions:
+                          </Text>
                           <Table size="sm" variant="simple">
                             <Tbody>
                               <Tr>
-                                <Td>Suggestions</Td>
+                                <Td>Total Suggestions</Td>
                                 <Td isNumeric>{formatNumber(metrics.totalSuggestions)}</Td>
                               </Tr>
                               <Tr>
-                                <Td>Accepted</Td>
+                                <Td>Accepted Suggestions</Td>
                                 <Td isNumeric>{formatNumber(metrics.acceptedSuggestions)}</Td>
                               </Tr>
                               <Tr>
@@ -551,7 +572,7 @@ const UserEngagementReport = () => {
                                 <Td isNumeric>{formatPercentage(metrics.acceptanceRate)}</Td>
                               </Tr>
                               <Tr>
-                                <Td>Lines Accepted</Td>
+                                <Td>Lines of Code Accepted</Td>
                                 <Td isNumeric>{formatNumber(metrics.acceptedLines || 0)}</Td>
                               </Tr>
                             </Tbody>
@@ -561,18 +582,21 @@ const UserEngagementReport = () => {
                         {engagementData && engagementData.how.interactions && (
                           <Box>
                             <Text fontWeight="medium" fontSize="sm" color="gray.500">Chat Interactions</Text>
+                            <Text fontSize="sm" mb={2}>
+                              How your team is using Copilot chat:
+                            </Text>
                             <Table size="sm" variant="simple">
                               <Tbody>
                                 <Tr>
-                                  <Td>Total Chats</Td>
+                                  <Td>Total Chat Sessions</Td>
                                   <Td isNumeric>{formatNumber(engagementData.how.interactions.total_chats || 0)}</Td>
                                 </Tr>
                                 <Tr>
-                                  <Td>Code Insertions</Td>
+                                  <Td>Code Insertions from Chat</Td>
                                   <Td isNumeric>{formatNumber(engagementData.how.interactions.chat_insertions || 0)}</Td>
                                 </Tr>
                                 <Tr>
-                                  <Td>Code Copies</Td>
+                                  <Td>Code Copied from Chat</Td>
                                   <Td isNumeric>{formatNumber(engagementData.how.interactions.chat_copies || 0)}</Td>
                                 </Tr>
                               </Tbody>
@@ -595,8 +619,8 @@ const UserEngagementReport = () => {
       >
         <GridItem>
           <ChartCard 
-            title="Usage Metrics" 
-            description="Overview of active users and suggestions"
+            title="User Engagement Summary" 
+            description="Overview of active users across your organization"
             bg={cardBg}
             borderColor={borderColor}
             timeFrame={reportDateRange}
@@ -617,7 +641,37 @@ const UserEngagementReport = () => {
                   }}
                 />
                 <Legend />
-                <Bar dataKey="value" fill={CHART_COLORS.primary} name="Count" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" fill={CHART_COLORS.primary} name="Users" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </GridItem>
+        
+        <GridItem>
+          <ChartCard 
+            title="Feature Usage Overview" 
+            description="Which Copilot features are being used most"
+            bg={cardBg}
+            borderColor={borderColor}
+            timeFrame={reportDateRange}
+            accentColor="green.400"
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={featureUsageData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value) => formatNumber(value)}
+                  contentStyle={{
+                    backgroundColor: cardBg,
+                    borderColor: borderColor,
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="value" fill={CHART_COLORS.tertiary} name="Users" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
