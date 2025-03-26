@@ -77,7 +77,7 @@ const UserEngagementReport = () => {
   }
   
   // Create data for user engagement chart
-  const engagementData = [
+  const userEngagementData = [
     { name: 'Active Users', value: metrics.totalActiveUsers || 0 },
     { name: 'Engaged Users', value: metrics.totalEngagedUsers || 0 },
     { name: 'Accepted Suggestions', value: metrics.acceptedSuggestions || 0 },
@@ -603,7 +603,7 @@ const UserEngagementReport = () => {
             accentColor="blue.400"
           >
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={engagementData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={userEngagementData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis dataKey="name" />
                 <YAxis />
