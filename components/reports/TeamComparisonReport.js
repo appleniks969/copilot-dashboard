@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Box, 
   Text,
@@ -30,7 +30,22 @@ import {
   Badge,
   Flex,
   SimpleGrid,
-  Divider
+  Divider,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  IconButton,
+  useDisclosure,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
+  Checkbox,
+  Stack
 } from '@chakra-ui/react';
 import { 
   BarChart, 
@@ -50,12 +65,83 @@ import {
 import ChartCard from '../ChartCard';
 import StatCard from '../StatCard';
 import { useCopilot } from '../../lib/CopilotContext';
-import { CHART_COLORS, TEAMS_LIST } from '../../lib/config';
+import { CHART_COLORS, TEAMS_LIST, DATE_RANGES } from '../../lib/config';
 import { formatNumber, formatPercentage, formatCurrency } from '../../lib/utils';
+import { ChevronDownIcon, TriangleDownIcon, TriangleUpIcon } from '@chakra-ui/icons';
+import DateRangeFilter from '../DateRangeFilter';
 
 const TeamComparisonReport = () => {
-  const { team, orgData, metrics, multiTeamData, dateRange, extractDaysFromDateRange } = useCopilot();
+  const { 
+    team, 
+    orgData, 
+    metrics, 
+    multiTeamData, 
+    dateRange, 
+    updateDateRange,
+    isLoading
+  } = useCopilot();
   
+  // State for sorting team tables
+  const [sortField, setSortField] = useState('name');
+  const [sortDirection, setSortDirection] = useState('asc');
+  
+  // State for team selection modal
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  
+  // Function to handle sort changes
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+  
+  // Function to get sort icon
+  const getSortIcon = (field) => {
+    if (sortField === field) {
+      return sortDirection === 'asc' ? <TriangleUpIcon ml={1} /> : <TriangleDownIcon ml={1} />;
+    }
+    return null;
+  };
+  
+  // Sort data based on current sort field and direction
+  const sortData = (data) => {
+    if (!data) return [];
+    
+    return [...data].sort((a, b) => {
+      // Handle string/number comparison
+      const aValue = a[sortField];
+      const bValue = b[sortField];
+      
+      // Handle acceptance rate calculations
+      if (sortField === 'acceptanceRate') {
+        const aRate = a.total_suggestions > 0 
+          ? (a.accepted_suggestions / a.total_suggestions) * 100
+          : 0;
+        const bRate = b.total_suggestions > 0 
+          ? (b.accepted_suggestions / b.total_suggestions) * 100
+          : 0;
+        return sortDirection === 'asc' ? aRate - bRate : bRate - aRate;
+      }
+      
+      // Handle team name sorting
+      if (sortField === 'name') {
+        const aName = a.team_slug || '';
+        const bName = b.team_slug || '';
+        return sortDirection === 'asc' 
+          ? aName.localeCompare(bName) 
+          : bName.localeCompare(aName);
+      }
+      
+      // Default numeric comparison
+      return sortDirection === 'asc' 
+        ? (aValue || 0) - (bValue || 0) 
+        : (bValue || 0) - (aValue || 0);
+    });
+  };
+
   // Always show team comparison view if we have multi-team data
   const hasMultiTeamData = multiTeamData && multiTeamData.length > 0;
   
@@ -67,6 +153,16 @@ const TeamComparisonReport = () => {
   const reportTitle = hasMultiTeamData 
     ? "Teams Comparison Report" 
     : (team ? `Team Usage Report: ${team}` : "Organization Usage Breakdown");
+  
+  // Display loading state
+  if (isLoading) {
+    return (
+      <Flex justify="center" align="center" height="400px" direction="column" gap={4}>
+        <Spinner size="xl" thickness="4px" color="blue.500" />
+        <Text>Loading team comparison data...</Text>
+      </Flex>
+    );
+  }
   
   // If we have multi-team data, create charts for team comparison
   if (hasMultiTeamData) {
@@ -116,7 +212,22 @@ const TeamComparisonReport = () => {
     
     return (
       <Box>
-        <Heading size="lg" mb={3}>{reportTitle}</Heading>
+        <Flex 
+          direction={{ base: "column", md: "row" }}
+          align={{ base: "flex-start", md: "center" }}
+          justify="space-between"
+          mb={3}
+          gap={4}
+        >
+          <Heading size="lg">{reportTitle}</Heading>
+          
+          {/* Add date range selector */}
+          <DateRangeFilter 
+            dateRange={dateRange} 
+            onDateRangeChange={(newRange) => updateDateRange(newRange)} 
+          />
+        </Flex>
+        
         <Text mb={6}>This report compares GitHub Copilot usage metrics across different teams in your organization.</Text>
         
         <SimpleGrid columns={{ base: 1, lg: 3 }} spacing={6} mb={6}>
@@ -407,18 +518,32 @@ const TeamComparisonReport = () => {
     );
   }
   
-  // If we don't have multi-team data, show a message that team selection is required
+  // If we don't have multi-team data, show an improved message that team selection is required
   if (!hasMultiTeamData) {
     return (
       <Box>
-        <Heading size="lg" mb={6}>{reportTitle}</Heading>
+        <Flex 
+          direction={{ base: "column", md: "row" }}
+          align={{ base: "flex-start", md: "center" }}
+          justify="space-between"
+          mb={3}
+          gap={4}
+        >
+          <Heading size="lg">{reportTitle}</Heading>
+          
+          {/* Add date range selector */}
+          <DateRangeFilter 
+            dateRange={dateRange} 
+            onDateRangeChange={(newRange) => updateDateRange(newRange)} 
+          />
+        </Flex>
         
         <Alert status="info" borderRadius="md" mb={6}>
           <AlertIcon />
           <Box>
             <AlertTitle mb={2}>Team Data Required</AlertTitle>
             <AlertDescription>
-              Please select at least one team from the filter above to view team comparison data.
+              Please select at least one team to view team comparison data.
             </AlertDescription>
           </Box>
         </Alert>
@@ -438,8 +563,18 @@ const TeamComparisonReport = () => {
             <Text>• Configure multiple teams in the TEAMS_LIST config to enable comparison</Text>
           </Box>
           
+          {/* Add team selection modal button */}
           <Button
             colorScheme="blue"
+            size="md"
+            onClick={onOpen}
+            mb={2}
+          >
+            Select Teams to Compare
+          </Button>
+          
+          <Button
+            colorScheme="gray"
             size="sm"
             as={Link}
             href="https://docs.github.com/en/copilot/github-copilot-for-business/overview/about-github-copilot-analytics#about-the-github-copilot-analytics-dashboard"
@@ -448,6 +583,36 @@ const TeamComparisonReport = () => {
             Learn More About Copilot Analytics
           </Button>
         </VStack>
+        
+        {/* Team Selection Modal */}
+        <Modal isOpen={isOpen} onClose={onClose} size="lg">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Select Teams to Compare</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <Text mb={4}>
+                Select the teams you'd like to compare in this report:
+              </Text>
+              
+              <Stack spacing={2}>
+                {TEAMS_LIST.map((teamName, index) => (
+                  <Checkbox key={index} value={teamName}>
+                    {teamName}
+                  </Checkbox>
+                ))}
+              </Stack>
+            </ModalBody>
+            <ModalFooter>
+              <Button colorScheme="blue" mr={3} onClick={onClose}>
+                Apply
+              </Button>
+              <Button variant="ghost" onClick={onClose}>
+                Cancel
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       </Box>
     );
   }
@@ -487,7 +652,22 @@ const TeamComparisonReport = () => {
   
   return (
     <Box>
-      <Heading size="lg" mb={6}>{reportTitle}</Heading>
+      <Flex 
+        direction={{ base: "column", md: "row" }}
+        align={{ base: "flex-start", md: "center" }}
+        justify="space-between"
+        mb={3}
+        gap={4}
+      >
+        <Heading size="lg">{reportTitle}</Heading>
+        
+        {/* Add date range selector */}
+        <DateRangeFilter 
+          dateRange={dateRange} 
+          onDateRangeChange={(newRange) => updateDateRange(newRange)} 
+        />
+      </Flex>
+      
       <Text mb={6}>
         {team 
           ? `This report shows Copilot usage for team ${team}, broken down by languages and editors.`

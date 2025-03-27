@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Box, 
   Grid, 
@@ -22,6 +22,7 @@ import {
   Th,
   Td,
   Divider,
+  Spinner,
 } from '@chakra-ui/react';
 import { 
   BarChart, 
@@ -44,6 +45,174 @@ import DateRangeFilter from '../DateRangeFilter';
 import { useCopilot } from '../../lib/CopilotContext';
 import { CHART_COLORS, DATE_RANGES } from '../../lib/config';
 import { formatNumber, formatPercentage, transformDataForCharts } from '../../lib/utils';
+
+// Breaking down the extractEngagementData function into smaller helper functions
+// This improves code organization and testability
+
+// Process "What" feature data (IDE Completions, Chat, PR summaries)
+const processWhatData = (rawData, processedDays) => {
+  const aggregated = {
+    ide_completions: { name: 'IDE Completions', users: 0, details: {} },
+    ide_chat: { name: 'IDE Chat', users: 0, details: {} },
+    dotcom_chat: { name: 'GitHub.com Chat', users: 0, details: {} },
+    pull_requests: { name: 'Pull Request Summaries', users: 0, details: {} }
+  };
+  
+  // Aggregate data across all days
+  rawData.forEach(dayData => {
+    if (!dayData) return;
+    
+    aggregated.ide_completions.users += dayData.copilot_ide_code_completions?.total_engaged_users || 0;
+    aggregated.ide_chat.users += dayData.copilot_ide_chat?.total_engaged_users || 0;
+    aggregated.dotcom_chat.users += dayData.copilot_dotcom_chat?.total_engaged_users || 0;
+    aggregated.pull_requests.users += dayData.copilot_dotcom_pull_requests?.total_engaged_users || 0;
+  });
+  
+  // Average by number of days
+  Object.keys(aggregated).forEach(key => {
+    aggregated[key].users = Math.round(aggregated[key].users / processedDays);
+  });
+  
+  return aggregated;
+};
+
+// Process "Where" data (Editors, Repositories)
+const processWhereData = (rawData, processedDays) => {
+  const aggregated = {
+    editors: {}, 
+    repositories: {} 
+  };
+  
+  // Aggregate data across all days
+  rawData.forEach(dayData => {
+    if (!dayData) return;
+    
+    // Editors
+    if (dayData.copilot_ide_code_completions?.editors) {
+      dayData.copilot_ide_code_completions.editors.forEach(editor => {
+        if (!aggregated.editors[editor.name]) {
+          aggregated.editors[editor.name] = { name: editor.name, users: 0, details: { models: [] } };
+        }
+        aggregated.editors[editor.name].users += editor.total_engaged_users || 0;
+      });
+    }
+    
+    // Repositories
+    if (dayData.copilot_dotcom_pull_requests?.repositories) {
+      dayData.copilot_dotcom_pull_requests.repositories.forEach(repo => {
+        if (!aggregated.repositories[repo.name]) {
+          aggregated.repositories[repo.name] = { name: repo.name, users: 0, details: { total_pr_summaries: 0 } };
+        }
+        aggregated.repositories[repo.name].users += repo.total_engaged_users || 0;
+        // Aggregate PR summaries count
+        aggregated.repositories[repo.name].details.total_pr_summaries += 
+          repo.models?.reduce((sum, model) => sum + (model.total_pr_summaries_created || 0), 0) || 0;
+      });
+    }
+  });
+  
+  // Average by number of days
+  Object.keys(aggregated.editors).forEach(key => {
+    aggregated.editors[key].users = Math.round(aggregated.editors[key].users / processedDays);
+  });
+  Object.keys(aggregated.repositories).forEach(key => {
+    aggregated.repositories[key].users = Math.round(aggregated.repositories[key].users / processedDays);
+  });
+  
+  // Convert objects to arrays for easier use in charts/tables
+  aggregated.editors = Object.values(aggregated.editors);
+  aggregated.repositories = Object.values(aggregated.repositories);
+  
+  return aggregated;
+};
+
+// Process "How" data (Interactions, Languages, Editors details)
+const processHowData = (rawData, processedDays) => {
+  const aggregated = {
+    interactions: {
+      chat_insertions: 0,
+      chat_copies: 0,
+      total_chats: 0
+    },
+    languages_summary: {},
+    editors_summary: {}
+  };
+  
+  // Aggregate data across all days
+  rawData.forEach(dayData => {
+    if (!dayData) return;
+    
+    // Chat Interactions
+    if (dayData.copilot_ide_chat?.editors) {
+      dayData.copilot_ide_chat.editors.forEach(editor => {
+        if (editor.models) {
+          editor.models.forEach(model => {
+            aggregated.interactions.chat_insertions += model.total_chat_insertion_events || 0;
+            aggregated.interactions.chat_copies += model.total_chat_copy_events || 0;
+            aggregated.interactions.total_chats += model.total_chats || 0;
+          });
+        }
+      });
+    }
+    
+    // Languages
+    if (dayData.copilot_ide_code_completions?.languages) {
+      dayData.copilot_ide_code_completions.languages.forEach(lang => {
+        if (!aggregated.languages_summary[lang.name]) {
+          aggregated.languages_summary[lang.name] = { name: lang.name, users: 0 };
+        }
+        aggregated.languages_summary[lang.name].users += lang.total_engaged_users || 0;
+      });
+    }
+    
+    // Editors details
+    if (dayData.copilot_ide_code_completions?.editors) {
+      dayData.copilot_ide_code_completions.editors.forEach(editor => {
+        if (!aggregated.editors_summary[editor.name]) {
+          aggregated.editors_summary[editor.name] = { name: editor.name, users: 0 };
+        }
+        aggregated.editors_summary[editor.name].users += editor.total_engaged_users || 0;
+      });
+    }
+  });
+  
+  // Average by number of days - only needed for user counts
+  Object.keys(aggregated.languages_summary).forEach(key => {
+    aggregated.languages_summary[key].users = Math.round(aggregated.languages_summary[key].users / processedDays);
+  });
+  Object.keys(aggregated.editors_summary).forEach(key => {
+    aggregated.editors_summary[key].users = Math.round(aggregated.editors_summary[key].users / processedDays);
+  });
+  
+  // Convert objects to arrays for easier use in charts/tables
+  aggregated.languages_summary = Object.values(aggregated.languages_summary);
+  aggregated.editors_summary = Object.values(aggregated.editors_summary);
+  
+  return aggregated;
+};
+
+// Process trend data to show changes over time
+const processTrendData = (rawData) => {
+  if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+    return [];
+  }
+  
+  // Create daily trend data points
+  return rawData.map(dayData => {
+    if (!dayData || !dayData.date) return null;
+    
+    return {
+      date: dayData.date,
+      activeUsers: dayData.copilot_ide_code_completions?.total_active_users || 0,
+      engagedUsers: dayData.copilot_ide_code_completions?.total_engaged_users || 0,
+      totalSuggestions: dayData.copilot_ide_code_completions?.total_suggestions || 0,
+      acceptedSuggestions: dayData.copilot_ide_code_completions?.total_acceptances || 0,
+      acceptanceRate: dayData.copilot_ide_code_completions?.total_suggestions > 0
+        ? (dayData.copilot_ide_code_completions.total_acceptances / dayData.copilot_ide_code_completions.total_suggestions) * 100
+        : 0
+    };
+  }).filter(Boolean);
+};
 
 const UserEngagementReport = () => {
   // Use report-specific date range
@@ -68,6 +237,16 @@ const UserEngagementReport = () => {
     }
   }, [reportId, dateRanges, updateReportDateRange]);
   
+  // Display loading state
+  if (isLoading) {
+    return (
+      <Flex justify="center" align="center" height="400px" direction="column" gap={4}>
+        <Spinner size="xl" thickness="4px" color="blue.500" />
+        <Text>Loading user engagement data...</Text>
+      </Flex>
+    );
+  }
+  
   if (!metrics) {
     return (
       <Box p={4}>
@@ -88,129 +267,16 @@ const UserEngagementReport = () => {
       return null;
     }
 
-    // Initialize aggregated data structures
-    const aggregated = {
-      what: {
-        ide_completions: { name: 'IDE Completions', users: 0, details: {} },
-        ide_chat: { name: 'IDE Chat', users: 0, details: {} },
-        dotcom_chat: { name: 'GitHub.com Chat', users: 0, details: {} },
-        pull_requests: { name: 'Pull Request Summaries', users: 0, details: {} }
-      },
-      where: {
-        editors: {}, // Store aggregated editor data { name: { users: 0, details: {} } }
-        repositories: {} // Store aggregated repo data { name: { users: 0, details: {} } }
-      },
-      how: {
-        interactions: {
-          chat_insertions: 0,
-          chat_copies: 0,
-          total_chats: 0
-        },
-        // Aggregate language/editor details for 'how' section if needed later
-        languages_summary: {}, 
-        editors_summary: {}
-      }
+    return {
+      what: processWhatData(rawData, processedDays),
+      where: processWhereData(rawData, processedDays),
+      how: processHowData(rawData, processedDays),
+      trends: processTrendData(rawData)
     };
-
-    // Iterate through each day's data
-    rawData.forEach(dayData => {
-      if (!dayData) return; // Skip null/undefined days
-
-      // --- Aggregate "What" Data (Feature Usage - Users) ---
-      aggregated.what.ide_completions.users += dayData.copilot_ide_code_completions?.total_engaged_users || 0;
-      aggregated.what.ide_chat.users += dayData.copilot_ide_chat?.total_engaged_users || 0;
-      aggregated.what.dotcom_chat.users += dayData.copilot_dotcom_chat?.total_engaged_users || 0;
-      aggregated.what.pull_requests.users += dayData.copilot_dotcom_pull_requests?.total_engaged_users || 0;
-
-      // --- Aggregate "Where" Data (Editors & Repos - Users) ---
-      // Editors
-      if (dayData.copilot_ide_code_completions?.editors) {
-        dayData.copilot_ide_code_completions.editors.forEach(editor => {
-          if (!aggregated.where.editors[editor.name]) {
-            aggregated.where.editors[editor.name] = { name: editor.name, users: 0, details: { models: [] } }; // Initialize
-          }
-          aggregated.where.editors[editor.name].users += editor.total_engaged_users || 0;
-          // Note: Aggregating 'details' like models might be complex, focusing on user count for now.
-        });
-      }
-      // Repositories (from PR summaries)
-      if (dayData.copilot_dotcom_pull_requests?.repositories) {
-        dayData.copilot_dotcom_pull_requests.repositories.forEach(repo => {
-           if (!aggregated.where.repositories[repo.name]) {
-             aggregated.where.repositories[repo.name] = { name: repo.name, users: 0, details: { total_pr_summaries: 0 } }; // Initialize
-           }
-           aggregated.where.repositories[repo.name].users += repo.total_engaged_users || 0;
-           // Aggregate PR summaries count
-           aggregated.where.repositories[repo.name].details.total_pr_summaries += 
-             repo.models?.reduce((sum, model) => sum + (model.total_pr_summaries_created || 0), 0) || 0;
-        });
-      }
-
-      // --- Aggregate "How" Data (Interactions) ---
-      // Chat Interactions
-      if (dayData.copilot_ide_chat?.editors) {
-        dayData.copilot_ide_chat.editors.forEach(editor => {
-          if (editor.models) {
-            editor.models.forEach(model => {
-              aggregated.how.interactions.chat_insertions += model.total_chat_insertion_events || 0;
-              aggregated.how.interactions.chat_copies += model.total_chat_copy_events || 0;
-              aggregated.how.interactions.total_chats += model.total_chats || 0;
-            });
-          }
-        });
-      }
-      
-      // --- Aggregate Language/Editor details for potential use in "How" ---
-      // (Similar logic to processMetricsData but storing here if needed for detailed views)
-      // Example for languages:
-      if (dayData.copilot_ide_code_completions?.languages) {
-         dayData.copilot_ide_code_completions.languages.forEach(lang => {
-             if (!aggregated.how.languages_summary[lang.name]) {
-                 aggregated.how.languages_summary[lang.name] = { name: lang.name, users: 0 };
-             }
-             aggregated.how.languages_summary[lang.name].users += lang.total_engaged_users || 0;
-         });
-      }
-       // Example for editors (can add more detail like suggestions/acceptances if needed):
-       if (dayData.copilot_ide_code_completions?.editors) {
-         dayData.copilot_ide_code_completions.editors.forEach(editor => {
-             if (!aggregated.how.editors_summary[editor.name]) {
-                 aggregated.how.editors_summary[editor.name] = { name: editor.name, users: 0 };
-             }
-             aggregated.how.editors_summary[editor.name].users += editor.total_engaged_users || 0;
-         });
-      }
-
-    });
-
-    // --- Average User Counts by processedDays ---
-    Object.keys(aggregated.what).forEach(key => {
-      aggregated.what[key].users = Math.round(aggregated.what[key].users / processedDays);
-    });
-    Object.keys(aggregated.where.editors).forEach(key => {
-      aggregated.where.editors[key].users = Math.round(aggregated.where.editors[key].users / processedDays);
-    });
-    Object.keys(aggregated.where.repositories).forEach(key => {
-      aggregated.where.repositories[key].users = Math.round(aggregated.where.repositories[key].users / processedDays);
-    });
-     Object.keys(aggregated.how.languages_summary).forEach(key => {
-      aggregated.how.languages_summary[key].users = Math.round(aggregated.how.languages_summary[key].users / processedDays);
-    });
-     Object.keys(aggregated.how.editors_summary).forEach(key => {
-      aggregated.how.editors_summary[key].users = Math.round(aggregated.how.editors_summary[key].users / processedDays);
-    });
-
-    // Convert aggregated objects to arrays for easier use in charts/tables
-    aggregated.where.editors = Object.values(aggregated.where.editors);
-    aggregated.where.repositories = Object.values(aggregated.where.repositories);
-    aggregated.how.languages_summary = Object.values(aggregated.how.languages_summary);
-    aggregated.how.editors_summary = Object.values(aggregated.how.editors_summary);
-
-    console.log("Aggregated Engagement Data:", aggregated);
-    return aggregated;
   };
   
-  const engagementData = extractEngagementData();
+  // Use useMemo to avoid recalculating on every render
+  const engagementData = useMemo(() => extractEngagementData(), [metrics]);
   
   // Create data for "What" chart
   const whatData = engagementData ? [
@@ -238,7 +304,6 @@ const UserEngagementReport = () => {
   const userEngagementData = [
     { name: 'Avg Daily Active', value: metrics.avgDailyActiveUsers || 0 },
     { name: 'Avg Daily Engaged', value: metrics.avgDailyEngagedUsers || 0 },
-    // Removed the incorrect 'Daily Active' bar
   ];
 
   // Create data for acceptance rate pie chart
@@ -719,6 +784,182 @@ const UserEngagementReport = () => {
           </ChartCard>
         </GridItem>
       </Grid>
+      
+      {/* New Trend Chart Section */}
+      {engagementData && engagementData.trends && engagementData.trends.length > 0 && (
+        <Box mt={8}>
+          <Heading size="md" mb={4} color={useColorModeValue('gray.700', 'gray.300')}>
+            Usage Trends (28-day Period)
+          </Heading>
+          
+          <ChartCard 
+            title="Daily User Activity" 
+            description="Active and engaged users over time"
+            infoTooltip="This chart shows daily trends in Copilot usage over the selected period. Active users are those who received suggestions, while engaged users are those who accepted suggestions."
+            bg={cardBg}
+            borderColor={borderColor}
+            accentColor="blue.400"
+            height="350px"
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart 
+                data={engagementData.trends} 
+                margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                <XAxis 
+                  dataKey="date" 
+                  tickFormatter={(date) => {
+                    const d = new Date(date);
+                    return `${d.getMonth()+1}/${d.getDate()}`;
+                  }}
+                />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value) => formatNumber(value)}
+                  labelFormatter={(date) => {
+                    const d = new Date(date);
+                    return d.toLocaleDateString();
+                  }}
+                  contentStyle={{
+                    backgroundColor: cardBg,
+                    borderColor: borderColor,
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                  }}
+                />
+                <Legend />
+                <Area 
+                  type="monotone" 
+                  dataKey="activeUsers" 
+                  name="Active Users" 
+                  stroke={CHART_COLORS.primary} 
+                  fill={CHART_COLORS.primary} 
+                  fillOpacity={0.3} 
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="engagedUsers" 
+                  name="Engaged Users" 
+                  stroke={CHART_COLORS.secondary} 
+                  fill={CHART_COLORS.secondary} 
+                  fillOpacity={0.3} 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
+          
+          <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6} mt={6}>
+            <GridItem>
+              <ChartCard 
+                title="Daily Suggestions" 
+                description="Offered and accepted suggestions over time"
+                infoTooltip="This chart shows the daily volume of suggestions offered by Copilot and how many were accepted by users."
+                bg={cardBg}
+                borderColor={borderColor}
+                accentColor="purple.400"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart 
+                    data={engagementData.trends} 
+                    margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis 
+                      dataKey="date" 
+                      tickFormatter={(date) => {
+                        const d = new Date(date);
+                        return `${d.getMonth()+1}/${d.getDate()}`;
+                      }}
+                    />
+                    <YAxis />
+                    <Tooltip 
+                      formatter={(value) => formatNumber(value)}
+                      labelFormatter={(date) => {
+                        const d = new Date(date);
+                        return d.toLocaleDateString();
+                      }}
+                      contentStyle={{
+                        backgroundColor: cardBg,
+                        borderColor: borderColor,
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend />
+                    <Area 
+                      type="monotone" 
+                      dataKey="totalSuggestions" 
+                      name="Total Suggestions" 
+                      stroke={CHART_COLORS.tertiary} 
+                      fill={CHART_COLORS.tertiary} 
+                      fillOpacity={0.3} 
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="acceptedSuggestions" 
+                      name="Accepted Suggestions" 
+                      stroke={CHART_COLORS.primary} 
+                      fill={CHART_COLORS.primary} 
+                      fillOpacity={0.3} 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </GridItem>
+            
+            <GridItem>
+              <ChartCard 
+                title="Daily Acceptance Rate" 
+                description="Percentage of suggestions accepted over time"
+                infoTooltip="This chart shows how the acceptance rate of Copilot suggestions varies day by day. Higher values indicate days when Copilot's suggestions were more frequently accepted by developers."
+                bg={cardBg}
+                borderColor={borderColor}
+                accentColor="green.400"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart 
+                    data={engagementData.trends} 
+                    margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis 
+                      dataKey="date" 
+                      tickFormatter={(date) => {
+                        const d = new Date(date);
+                        return `${d.getMonth()+1}/${d.getDate()}`;
+                      }}
+                    />
+                    <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                    <Tooltip 
+                      formatter={(value) => `${value.toFixed(2)}%`}
+                      labelFormatter={(date) => {
+                        const d = new Date(date);
+                        return d.toLocaleDateString();
+                      }}
+                      contentStyle={{
+                        backgroundColor: cardBg,
+                        borderColor: borderColor,
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <Legend />
+                    <Area 
+                      type="monotone" 
+                      dataKey="acceptanceRate" 
+                      name="Acceptance Rate" 
+                      stroke={CHART_COLORS.secondary} 
+                      fill={CHART_COLORS.secondary} 
+                      fillOpacity={0.3} 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </GridItem>
+          </Grid>
+        </Box>
+      )}
     </Box>
   );
 };

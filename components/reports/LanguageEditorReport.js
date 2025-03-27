@@ -16,6 +16,9 @@ import {
   AlertTitle,
   AlertDescription,
   useColorModeValue,
+  Spinner,
+  Flex,
+  Tooltip
 } from '@chakra-ui/react';
 import { 
   BarChart, 
@@ -23,7 +26,6 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip, 
   Legend,
   ResponsiveContainer,
   PieChart,
@@ -32,11 +34,21 @@ import {
 } from 'recharts';
 import ChartCard from '../ChartCard';
 import { useCopilot } from '../../lib/CopilotContext';
-import { CHART_COLORS, PROGRAMMING_LANGUAGES, EDITORS } from '../../lib/config';
+import { CHART_COLORS, CHART_COLORS_ARRAY, PROGRAMMING_LANGUAGES, EDITORS } from '../../lib/config';
 import { formatNumber, formatPercentage, transformDataForCharts } from '../../lib/utils';
 
 const LanguageEditorReport = () => {
-  const { metrics, dateRange, team } = useCopilot();
+  const { metrics, dateRange, team, isLoading } = useCopilot();
+  
+  // Display loading state
+  if (isLoading) {
+    return (
+      <Flex justify="center" align="center" height="400px" direction="column" gap={4}>
+        <Spinner size="xl" thickness="4px" color="blue.500" />
+        <Text>Loading language and editor data...</Text>
+      </Flex>
+    );
+  }
   
   if (!metrics) {
     return (
@@ -127,18 +139,6 @@ const LanguageEditorReport = () => {
     value: item.value,
   }));
   
-  // Colors for the pie charts
-  const COLORS = [
-    CHART_COLORS.primary, 
-    CHART_COLORS.secondary, 
-    CHART_COLORS.tertiary, 
-    CHART_COLORS.quaternary, 
-    CHART_COLORS.gray,
-    '#6B46C1', // Additional colors for more items
-    '#DD6B20',
-    '#319795',
-  ];
-  
   const cardBg = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const tableBg = useColorModeValue('white', 'gray.800');
@@ -176,7 +176,7 @@ const LanguageEditorReport = () => {
                   dataKey="value"
                 >
                   {pieLanguageData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS_ARRAY[index % CHART_COLORS_ARRAY.length]} />
                   ))}
                 </Pie>
                 <Tooltip 
@@ -216,7 +216,7 @@ const LanguageEditorReport = () => {
                   dataKey="value"
                 >
                   {pieEditorData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS_ARRAY[index % CHART_COLORS_ARRAY.length]} />
                   ))}
                 </Pie>
                 <Tooltip 
@@ -239,6 +239,11 @@ const LanguageEditorReport = () => {
         <GridItem>
           <Box p={5} shadow="sm" borderWidth="1px" borderRadius="lg" bg={tableBg}>
             <Heading size="md" mb={4}>Language Usage Details</Heading>
+            <Text mb={2} fontSize="sm" color="gray.500">
+              <Tooltip label="Raw total suggestions are normalized values that account for varying periods in the data. This provides more accurate comparisons across different time periods.">
+                Suggestions shown are normalized for accurate comparison.
+              </Tooltip>
+            </Text>
             <Box overflowX="auto">
               <Table variant="simple" size="sm">
                 <Thead>
@@ -271,6 +276,11 @@ const LanguageEditorReport = () => {
         <GridItem>
           <Box p={5} shadow="sm" borderWidth="1px" borderRadius="lg" bg={tableBg}>
             <Heading size="md" mb={4}>Editor Usage Details</Heading>
+            <Text mb={2} fontSize="sm" color="gray.500">
+              <Tooltip label="Raw total suggestions are normalized values that account for varying periods in the data. This provides more accurate comparisons across different time periods.">
+                Suggestions shown are normalized for accurate comparison.
+              </Tooltip>
+            </Text>
             <Box overflowX="auto">
               <Table variant="simple" size="sm">
                 <Thead>
