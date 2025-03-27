@@ -76,124 +76,138 @@ const UserEngagementReport = () => {
     );
   }
   
-  // Create data for user engagement chart
-  const userEngagementData = [
-    { name: 'Active Users', value: metrics.totalActiveUsers || 0 },
-    { name: 'Engaged Users', value: metrics.totalEngagedUsers || 0 },
-    { name: 'Daily Active', value: metrics.dailyActiveUsers || 0 },
-  ];
-  
-  // Create data for acceptance rate pie chart
-  const acceptanceData = [
-    { name: 'Accepted', value: metrics.acceptedSuggestions || 0 },
-    { name: 'Not Accepted', value: (metrics.totalSuggestions || 0) - (metrics.acceptedSuggestions || 0) },
-  ];
-  
-  // Create data for feature usage
-  const featureUsageData = engagementData ? [
-    { name: 'Code Completions', value: engagementData.what.ide_completions.users || 0 },
-    { name: 'IDE Chat', value: engagementData.what.ide_chat.users || 0 },
-    { name: 'GitHub Chat', value: engagementData.what.dotcom_chat.users || 0 },
-    { name: 'PR Summaries', value: engagementData.what.pull_requests.users || 0 },
-  ] : [];
-  
   const cardBg = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   
-  // Extract engagement data from raw API data
+  // Extract and aggregate engagement data from raw API data across all days
   const extractEngagementData = () => {
-    const { rawData } = metrics;
-    if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+    // Use rawData and processedDays passed from getMetricsForReport
+    const { rawData, processedDays } = metrics; 
+    if (!rawData || !Array.isArray(rawData) || rawData.length === 0 || !processedDays || processedDays === 0) {
+      console.log("Raw data missing or invalid for engagement extraction", { rawData, processedDays });
       return null;
     }
 
-    // Use the first day's data as sample
-    const dayData = rawData[0];
-    
-    // Define engagement categories
-    const engagementTypes = {
+    // Initialize aggregated data structures
+    const aggregated = {
       what: {
-        ide_completions: {
-          name: 'IDE Completions',
-          users: dayData.copilot_ide_code_completions?.total_engaged_users || 0,
-          details: dayData.copilot_ide_code_completions || {}
-        },
-        ide_chat: {
-          name: 'IDE Chat',
-          users: dayData.copilot_ide_chat?.total_engaged_users || 0,
-          details: dayData.copilot_ide_chat || {}
-        },
-        dotcom_chat: {
-          name: 'GitHub.com Chat',
-          users: dayData.copilot_dotcom_chat?.total_engaged_users || 0,
-          details: dayData.copilot_dotcom_chat || {}
-        },
-        pull_requests: {
-          name: 'Pull Request Summaries',
-          users: dayData.copilot_dotcom_pull_requests?.total_engaged_users || 0,
-          details: dayData.copilot_dotcom_pull_requests || {}
-        }
+        ide_completions: { name: 'IDE Completions', users: 0, details: {} },
+        ide_chat: { name: 'IDE Chat', users: 0, details: {} },
+        dotcom_chat: { name: 'GitHub.com Chat', users: 0, details: {} },
+        pull_requests: { name: 'Pull Request Summaries', users: 0, details: {} }
       },
       where: {
-        editors: {},
-        repositories: {}
+        editors: {}, // Store aggregated editor data { name: { users: 0, details: {} } }
+        repositories: {} // Store aggregated repo data { name: { users: 0, details: {} } }
       },
       how: {
-        acceptances: {},
-        interactions: {}
+        interactions: {
+          chat_insertions: 0,
+          chat_copies: 0,
+          total_chats: 0
+        },
+        // Aggregate language/editor details for 'how' section if needed later
+        languages_summary: {}, 
+        editors_summary: {}
       }
     };
-    
-    // Extract "where" data - editors
-    if (dayData.copilot_ide_code_completions?.editors) {
-      dayData.copilot_ide_code_completions.editors.forEach(editor => {
-        engagementTypes.where.editors[editor.name] = {
-          name: editor.name,
-          users: editor.total_engaged_users || 0,
-          details: editor
-        };
-      });
-    }
-    
-    // Extract "where" data - repositories
-    if (dayData.copilot_dotcom_pull_requests?.repositories) {
-      dayData.copilot_dotcom_pull_requests.repositories.forEach(repo => {
-        engagementTypes.where.repositories[repo.name] = {
-          name: repo.name,
-          users: repo.total_engaged_users || 0,
-          details: repo
-        };
-      });
-    }
-    
-    // Extract "how" data - interactions
-    if (dayData.copilot_ide_chat) {
-      let chatInsertions = 0;
-      let chatCopies = 0;
-      
-      if (dayData.copilot_ide_chat.editors) {
+
+    // Iterate through each day's data
+    rawData.forEach(dayData => {
+      if (!dayData) return; // Skip null/undefined days
+
+      // --- Aggregate "What" Data (Feature Usage - Users) ---
+      aggregated.what.ide_completions.users += dayData.copilot_ide_code_completions?.total_engaged_users || 0;
+      aggregated.what.ide_chat.users += dayData.copilot_ide_chat?.total_engaged_users || 0;
+      aggregated.what.dotcom_chat.users += dayData.copilot_dotcom_chat?.total_engaged_users || 0;
+      aggregated.what.pull_requests.users += dayData.copilot_dotcom_pull_requests?.total_engaged_users || 0;
+
+      // --- Aggregate "Where" Data (Editors & Repos - Users) ---
+      // Editors
+      if (dayData.copilot_ide_code_completions?.editors) {
+        dayData.copilot_ide_code_completions.editors.forEach(editor => {
+          if (!aggregated.where.editors[editor.name]) {
+            aggregated.where.editors[editor.name] = { name: editor.name, users: 0, details: { models: [] } }; // Initialize
+          }
+          aggregated.where.editors[editor.name].users += editor.total_engaged_users || 0;
+          // Note: Aggregating 'details' like models might be complex, focusing on user count for now.
+        });
+      }
+      // Repositories (from PR summaries)
+      if (dayData.copilot_dotcom_pull_requests?.repositories) {
+        dayData.copilot_dotcom_pull_requests.repositories.forEach(repo => {
+           if (!aggregated.where.repositories[repo.name]) {
+             aggregated.where.repositories[repo.name] = { name: repo.name, users: 0, details: { total_pr_summaries: 0 } }; // Initialize
+           }
+           aggregated.where.repositories[repo.name].users += repo.total_engaged_users || 0;
+           // Aggregate PR summaries count
+           aggregated.where.repositories[repo.name].details.total_pr_summaries += 
+             repo.models?.reduce((sum, model) => sum + (model.total_pr_summaries_created || 0), 0) || 0;
+        });
+      }
+
+      // --- Aggregate "How" Data (Interactions) ---
+      // Chat Interactions
+      if (dayData.copilot_ide_chat?.editors) {
         dayData.copilot_ide_chat.editors.forEach(editor => {
           if (editor.models) {
             editor.models.forEach(model => {
-              chatInsertions += model.total_chat_insertion_events || 0;
-              chatCopies += model.total_chat_copy_events || 0;
+              aggregated.how.interactions.chat_insertions += model.total_chat_insertion_events || 0;
+              aggregated.how.interactions.chat_copies += model.total_chat_copy_events || 0;
+              aggregated.how.interactions.total_chats += model.total_chats || 0;
             });
           }
         });
       }
       
-      engagementTypes.how.interactions = {
-        chat_insertions: chatInsertions,
-        chat_copies: chatCopies,
-        total_chats: dayData.copilot_ide_chat.editors?.reduce((sum, editor) => {
-          return sum + editor.models?.reduce((modelSum, model) => {
-            return modelSum + (model.total_chats || 0);
-          }, 0) || 0;
-        }, 0) || 0
-      };
-    }
-    
-    return engagementTypes;
+      // --- Aggregate Language/Editor details for potential use in "How" ---
+      // (Similar logic to processMetricsData but storing here if needed for detailed views)
+      // Example for languages:
+      if (dayData.copilot_ide_code_completions?.languages) {
+         dayData.copilot_ide_code_completions.languages.forEach(lang => {
+             if (!aggregated.how.languages_summary[lang.name]) {
+                 aggregated.how.languages_summary[lang.name] = { name: lang.name, users: 0 };
+             }
+             aggregated.how.languages_summary[lang.name].users += lang.total_engaged_users || 0;
+         });
+      }
+       // Example for editors (can add more detail like suggestions/acceptances if needed):
+       if (dayData.copilot_ide_code_completions?.editors) {
+         dayData.copilot_ide_code_completions.editors.forEach(editor => {
+             if (!aggregated.how.editors_summary[editor.name]) {
+                 aggregated.how.editors_summary[editor.name] = { name: editor.name, users: 0 };
+             }
+             aggregated.how.editors_summary[editor.name].users += editor.total_engaged_users || 0;
+         });
+      }
+
+    });
+
+    // --- Average User Counts by processedDays ---
+    Object.keys(aggregated.what).forEach(key => {
+      aggregated.what[key].users = Math.round(aggregated.what[key].users / processedDays);
+    });
+    Object.keys(aggregated.where.editors).forEach(key => {
+      aggregated.where.editors[key].users = Math.round(aggregated.where.editors[key].users / processedDays);
+    });
+    Object.keys(aggregated.where.repositories).forEach(key => {
+      aggregated.where.repositories[key].users = Math.round(aggregated.where.repositories[key].users / processedDays);
+    });
+     Object.keys(aggregated.how.languages_summary).forEach(key => {
+      aggregated.how.languages_summary[key].users = Math.round(aggregated.how.languages_summary[key].users / processedDays);
+    });
+     Object.keys(aggregated.how.editors_summary).forEach(key => {
+      aggregated.how.editors_summary[key].users = Math.round(aggregated.how.editors_summary[key].users / processedDays);
+    });
+
+    // Convert aggregated objects to arrays for easier use in charts/tables
+    aggregated.where.editors = Object.values(aggregated.where.editors);
+    aggregated.where.repositories = Object.values(aggregated.where.repositories);
+    aggregated.how.languages_summary = Object.values(aggregated.how.languages_summary);
+    aggregated.how.editors_summary = Object.values(aggregated.how.editors_summary);
+
+    console.log("Aggregated Engagement Data:", aggregated);
+    return aggregated;
   };
   
   const engagementData = extractEngagementData();
@@ -208,17 +222,33 @@ const UserEngagementReport = () => {
   
   // Create data for "Where" chart
   const whereData = engagementData ? [
-    ...Object.values(engagementData.where.editors).map(editor => ({
+    ...engagementData.where.editors.map(editor => ({
       name: editor.name,
       value: editor.users || 0,
       category: 'Editor'
     })),
-    ...Object.values(engagementData.where.repositories).map(repo => ({
+    ...engagementData.where.repositories.map(repo => ({
       name: repo.name,
       value: repo.users || 0,
       category: 'Repository'
     }))
-  ] : [];
+  ].sort((a, b) => b.value - a.value) : [];
+
+  // Create data for user engagement chart using renamed metrics
+  const userEngagementData = [
+    { name: 'Avg Daily Active', value: metrics.avgDailyActiveUsers || 0 },
+    { name: 'Avg Daily Engaged', value: metrics.avgDailyEngagedUsers || 0 },
+    // Removed the incorrect 'Daily Active' bar
+  ];
+
+  // Create data for acceptance rate pie chart
+  const acceptanceData = [
+    { name: 'Accepted', value: metrics.acceptedSuggestions || 0 },
+    { name: 'Not Accepted', value: (metrics.totalSuggestions || 0) - (metrics.acceptedSuggestions || 0) },
+  ];
+  
+  // Update featureUsageData to use whatData
+  const featureUsageData = whatData;
   
   return (
     <Box>
@@ -255,18 +285,18 @@ const UserEngagementReport = () => {
       
       <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6} mb={6}>
         <StatCard 
-          title="Total Active Users" 
-          value={formatNumber(metrics.totalActiveUsers)}
-          helpText="Total users who received suggestions"
+          title="Avg Daily Active Users" 
+          value={formatNumber(metrics.avgDailyActiveUsers || 0)}
+          helpText="Average users receiving suggestions per day"
           accentColor="blue.400"
           bg={cardBg}
           borderColor={borderColor}
           timeFrame={reportDateRange}
         />
         <StatCard 
-          title="Daily Active Users" 
-          value={formatNumber(metrics.dailyActiveUsers)}
-          helpText="Average per day"
+          title="Avg Daily Engaged Users" 
+          value={formatNumber(metrics.avgDailyEngagedUsers || 0)}
+          helpText="Average users interacting per day"
           accentColor="green.400"
           bg={cardBg}
           borderColor={borderColor}
@@ -344,47 +374,55 @@ const UserEngagementReport = () => {
                   
                   <GridItem>
                     <Box p={5} borderWidth="1px" borderRadius="lg" borderColor={borderColor} bg={cardBg}>
-                      <Heading size="sm" mb={4}>Feature Usage Details</Heading>
+                      <Heading size="sm" mb={4}>Feature Usage Details (Avg Daily Users)</Heading>
                       <Table size="sm" variant="simple">
                         <Thead>
                           <Tr>
                             <Th>Feature</Th>
-                            <Th isNumeric>Users</Th>
-                            <Th isNumeric>% of Total</Th>
+                            <Th isNumeric>Avg Users</Th>
+                            <Th isNumeric>% of Avg Active</Th>
                           </Tr>
                         </Thead>
                         <Tbody>
+                          {/* Use aggregated engagementData */}
                           {engagementData && Object.values(engagementData.what).map((feature, index) => (
                             <Tr key={index}>
                               <Td fontWeight="medium">{feature.name}</Td>
                               <Td isNumeric>{formatNumber(feature.users)}</Td>
                               <Td isNumeric>
-                                {formatPercentage((feature.users / metrics.totalActiveUsers) * 100)}
+                                {/* Calculate percentage based on avgDailyActiveUsers */}
+                                {metrics.avgDailyActiveUsers > 0 
+                                  ? formatPercentage((feature.users / metrics.avgDailyActiveUsers) * 100)
+                                  : '0%'}
                               </Td>
                             </Tr>
                           ))}
                         </Tbody>
                       </Table>
                       
-                      {engagementData && engagementData.what.ide_completions.details.languages && (
+                      {/* Update Language Table */}
+                      {engagementData && engagementData.how.languages_summary.length > 0 && (
                         <>
                           <Divider my={4} />
-                          <Heading size="sm" mb={4}>Programming Languages Used</Heading>
+                          <Heading size="sm" mb={4}>Programming Languages Used (Avg Daily Users)</Heading>
                           <Text fontSize="sm" mb={3}>
-                            Languages your team uses with Copilot code completions:
+                            Avg daily users per language (via code completions):
                           </Text>
                           <Table size="sm" variant="simple">
                             <Thead>
                               <Tr>
                                 <Th>Language</Th>
-                                <Th isNumeric>Users</Th>
+                                <Th isNumeric>Avg Users</Th>
                               </Tr>
                             </Thead>
                             <Tbody>
-                              {engagementData.what.ide_completions.details.languages.map((lang, index) => (
+                              {/* Use aggregated language data */}
+                              {engagementData.how.languages_summary
+                                .sort((a, b) => b.users - a.users) // Sort by users
+                                .map((lang, index) => (
                                 <Tr key={index}>
                                   <Td>{lang.name}</Td>
-                                  <Td isNumeric>{formatNumber(lang.total_engaged_users || 0)}</Td>
+                                  <Td isNumeric>{formatNumber(lang.users || 0)}</Td>
                                 </Tr>
                               ))}
                             </Tbody>
@@ -437,52 +475,56 @@ const UserEngagementReport = () => {
                   
                   <GridItem>
                     <Box p={5} borderWidth="1px" borderRadius="lg" borderColor={borderColor} bg={cardBg}>
-                      <Heading size="sm" mb={4}>IDE Usage</Heading>
+                      <Heading size="sm" mb={4}>IDE Usage (Avg Daily Users)</Heading>
                       <Text fontSize="sm" mb={3}>
-                        Code editors where your team is using Copilot:
+                        Avg daily users per code editor:
                       </Text>
                       <Table size="sm" variant="simple">
                         <Thead>
                           <Tr>
                             <Th>Editor</Th>
-                            <Th isNumeric>Users</Th>
-                            <Th isNumeric>Models</Th>
+                            <Th isNumeric>Avg Users</Th>
                           </Tr>
                         </Thead>
                         <Tbody>
-                          {engagementData && Object.values(engagementData.where.editors).map((editor, index) => (
+                          {/* Use aggregated editor data */}
+                          {engagementData && engagementData.where.editors
+                            .sort((a, b) => b.users - a.users) // Sort by users
+                            .map((editor, index) => (
                             <Tr key={index}>
                               <Td fontWeight="medium">{editor.name}</Td>
                               <Td isNumeric>{formatNumber(editor.users)}</Td>
-                              <Td isNumeric>{editor.details.models ? editor.details.models.length : 0}</Td>
                             </Tr>
                           ))}
                         </Tbody>
                       </Table>
                       
-                      {engagementData && Object.keys(engagementData.where.repositories).length > 0 && (
+                      {engagementData && engagementData.where.repositories.length > 0 && (
                         <>
                           <Divider my={4} />
-                          <Heading size="sm" mb={4}>Repository Usage</Heading>
+                          <Heading size="sm" mb={4}>Repository Usage (Avg Daily Users)</Heading>
                           <Text fontSize="sm" mb={3}>
-                            GitHub repositories where your team uses Copilot:
+                            Avg daily users per repository (via PR summaries):
                           </Text>
                           <Table size="sm" variant="simple">
                             <Thead>
                               <Tr>
                                 <Th>Repository</Th>
-                                <Th isNumeric>Users</Th>
-                                <Th isNumeric>PR Summaries</Th>
+                                <Th isNumeric>Avg Users</Th>
+                                <Th isNumeric>Total PR Summaries</Th>
                               </Tr>
                             </Thead>
                             <Tbody>
-                              {Object.values(engagementData.where.repositories).map((repo, index) => (
+                              {/* Use aggregated repo data */}
+                              {engagementData.where.repositories
+                                .sort((a, b) => b.users - a.users) // Sort
+                                .map((repo, index) => (
                                 <Tr key={index}>
                                   <Td>{repo.name}</Td>
                                   <Td isNumeric>{formatNumber(repo.users)}</Td>
                                   <Td isNumeric>
-                                    {repo.details.models?.reduce((sum, model) => 
-                                      sum + (model.total_pr_summaries_created || 0), 0) || 0}
+                                    {/* Use aggregated total */}
+                                    {formatNumber(repo.details.total_pr_summaries || 0)}
                                   </Td>
                                 </Tr>
                               ))}
@@ -581,9 +623,9 @@ const UserEngagementReport = () => {
                         
                         {engagementData && engagementData.how.interactions && (
                           <Box>
-                            <Text fontWeight="medium" fontSize="sm" color="gray.500">Chat Interactions</Text>
+                            <Text fontWeight="medium" fontSize="sm" color="gray.500">Chat Interactions (Totals)</Text>
                             <Text fontSize="sm" mb={2}>
-                              How your team is using Copilot chat:
+                              Totals over the selected period:
                             </Text>
                             <Table size="sm" variant="simple">
                               <Tbody>
