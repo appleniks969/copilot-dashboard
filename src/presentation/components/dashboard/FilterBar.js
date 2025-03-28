@@ -25,13 +25,14 @@ import {
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import { useConfig } from '../../contexts/ConfigContext';
 // Updated import path to use src/config/constants
-import { DATE_RANGES, TEAMS_LIST } from '../../../config/constants';
+import { DATE_RANGES } from '../../../config/constants';
 
 const FilterBar = () => {
   const { 
     organization, 
     team, 
     globalDateRange, 
+    teamsList,
     updateOrganization, 
     updateTeam, 
     updateGlobalDateRange 
@@ -111,8 +112,8 @@ const FilterBar = () => {
               placeholder="Select team"
               size="md"
             >
-              {TEAMS_LIST.length > 0 ? (
-                TEAMS_LIST.map(teamOption => (
+              {teamsList && teamsList.length > 0 ? (
+                teamsList.map(teamOption => (
                   <option key={teamOption} value={teamOption}>
                     {teamOption}
                   </option>

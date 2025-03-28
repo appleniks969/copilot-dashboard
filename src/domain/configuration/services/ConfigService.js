@@ -60,4 +60,9 @@ export class ConfigService {
       licenseCostPerMonth: 19
     };
   }
+
+  // Get teams list
+  getTeamsList() {
+    return this.defaultConfig.TEAMS_LIST || [];
+  }
 }

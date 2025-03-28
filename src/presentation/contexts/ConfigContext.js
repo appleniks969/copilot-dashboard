@@ -24,6 +24,7 @@ export const ConfigProvider = ({ children, configurationService }) => {
   const [team, setTeam] = useState(null);
   const [globalDateRange, setGlobalDateRange] = useState(null);
   const [reportConfigs, setReportConfigs] = useState({});
+  const [teamsList, setTeamsList] = useState([]);
 
   // Load configuration on mount
   useEffect(() => {
@@ -34,6 +35,12 @@ export const ConfigProvider = ({ children, configurationService }) => {
       setTeam(config.team);
       setGlobalDateRange(config.globalDateRange);
       setReportConfigs(config.reportConfigs);
+      
+      // Get the teams list from env variables via configuration service
+      const teams = configurationService.getTeamsList();
+      setTeamsList(teams);
+      
+      console.log('Teams list loaded:', teams);
     };
     
     loadConfig();
@@ -95,6 +102,7 @@ export const ConfigProvider = ({ children, configurationService }) => {
     team,
     globalDateRange,
     reportConfigs,
+    teamsList,
     updateOrganization,
     updateTeam,
     updateGlobalDateRange,

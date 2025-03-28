@@ -66,4 +66,9 @@ export class ConfigurationService {
       config
     };
   }
+  
+  // Get teams list
+  getTeamsList() {
+    return this.configService.getTeamsList();
+  }
 }

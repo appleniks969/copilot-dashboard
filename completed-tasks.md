@@ -72,6 +72,7 @@ The GitHub Copilot Dashboard has been successfully migrated to a Domain-Driven D
 - **Added Support for All Token Types**: Removed token format validation to accept all GitHub token formats.
 - **Simplified Authentication**: Authentication process now accepts any token format that GitHub validates.
 - **Fixed Environment Variable Loading**: Implemented robust environment variable handling with support for loading from `.env.local` and Next.js runtime configuration.
+- **Fixed FilterBar Environment Variables**: Updated the FilterBar component to use environment variables through the ConfigContext for better reliability.
 
 ## Future Enhancement Opportunities
 
