@@ -26,18 +26,21 @@ import { ChevronDownIcon } from '@chakra-ui/icons';
 import { useConfig } from '../../contexts/ConfigContext';
 // Updated import path to use src/config/constants
 import { DATE_RANGES } from '../../../config/constants';
+import EnvDebugInfo from '../common/EnvDebugInfo';
 
 const FilterBar = () => {
-  const { 
-    organization, 
-    team, 
+  const {
+    organization,
+    team,
     globalDateRange, 
     teamsList,
     updateOrganization, 
     updateTeam, 
-    updateGlobalDateRange 
+    updateGlobalDateRange
   } = useConfig();
-  
+  // Removed DEBUG log
+
+  // Initialize selected org with the organization from context or empty string
   const [selectedOrg, setSelectedOrg] = useState(organization || '');
   const [selectedTeam, setSelectedTeam] = useState(team || '');
   
@@ -100,10 +103,10 @@ const FilterBar = () => {
               placeholder="Select organization"
               size="md"
             >
-              <option value="your-org">Your Organization</option>
+              <option value={organization || 'your-org'}>{organization || 'Your Organization'}</option>
             </Select>
           </FormControl>
-          
+
           <FormControl>
             <FormLabel fontSize="sm">Team</FormLabel>
             <Select 
@@ -161,6 +164,9 @@ const FilterBar = () => {
             Apply Filters
           </Button>
         </Flex>
+        
+        {/* Debug information */}
+        <EnvDebugInfo />
       </VStack>
     </Box>
   );

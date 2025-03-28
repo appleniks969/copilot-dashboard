@@ -4,6 +4,7 @@
  */
 
 import { UserPreferences } from '../entities/UserPreferences';
+import { getTeamsList, getOrganization } from '../../../utils/env';
 
 export class ConfigService {
   constructor(configRepository, defaultConfig = {}) {
@@ -23,8 +24,15 @@ export class ConfigService {
 
   // Get default organization
   getDefaultOrg() {
+    // First try from user preferences
     const preferences = this.getUserPreferences();
-    return preferences.preferredOrg || this.defaultConfig.DEFAULT_ORG;
+    if (preferences.preferredOrg) {
+      return preferences.preferredOrg;
+    }
+
+    // If no user preference, directly use the environment utility function.
+    // This function reads process.env.NEXT_PUBLIC_ORGANIZATION and has its own fallback.
+    return getOrganization();
   }
 
   // Get default team
@@ -63,6 +71,12 @@ export class ConfigService {
 
   // Get teams list
   getTeamsList() {
-    return this.defaultConfig.TEAMS_LIST || [];
+    // First try from the default config (passed from app.js) 
+    if (this.defaultConfig.TEAMS_LIST && this.defaultConfig.TEAMS_LIST.length > 0) {
+      return this.defaultConfig.TEAMS_LIST;
+    }
+    
+    // If that fails, use the direct environment utility as a fallback
+    return getTeamsList();
   }
 }

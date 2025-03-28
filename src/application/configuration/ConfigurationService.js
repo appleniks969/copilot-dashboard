@@ -10,10 +10,14 @@ export class ConfigurationService {
 
   // Get current configuration
   getCurrentConfig() {
+    // Get user preferences
     const preferences = this.configService.getUserPreferences();
     
+    // Get organization with fallbacks
+    const organization = preferences.preferredOrg || this.configService.getDefaultOrg();
+    
     return {
-      organization: preferences.preferredOrg,
+      organization,
       team: preferences.preferredTeam,
       globalDateRange: preferences.defaultDateRange,
       reportConfigs: preferences.reportConfigs

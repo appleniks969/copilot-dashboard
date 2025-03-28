@@ -4,6 +4,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+// Removed: import { getOrganization } from '../../utils/env';
 
 // Create context
 const ConfigContext = createContext(null);
@@ -20,7 +21,7 @@ export const useConfig = () => {
 // Provider component
 export const ConfigProvider = ({ children, configurationService }) => {
   // State for configuration
-  const [organization, setOrganization] = useState(null);
+  const [organization, setOrganization] = useState(null); // Initialize as null
   const [team, setTeam] = useState(null);
   const [globalDateRange, setGlobalDateRange] = useState(null);
   const [reportConfigs, setReportConfigs] = useState({});
@@ -31,6 +32,7 @@ export const ConfigProvider = ({ children, configurationService }) => {
     const loadConfig = () => {
       const config = configurationService.getCurrentConfig();
       
+      // Removed DEBUG log
       setOrganization(config.organization);
       setTeam(config.team);
       setGlobalDateRange(config.globalDateRange);
@@ -39,8 +41,14 @@ export const ConfigProvider = ({ children, configurationService }) => {
       // Get the teams list from env variables via configuration service
       const teams = configurationService.getTeamsList();
       setTeamsList(teams);
+      // Removed DEBUG log
       
-      console.log('Teams list loaded:', teams);
+      console.log('Config loaded:', {
+        organization: config.organization,
+        team: config.team,
+        teams: teams,
+        globalDateRange: config.globalDateRange
+      });
     };
     
     loadConfig();
