@@ -1,13 +1,13 @@
 /** @type {import('next').NextConfig} */
-require('dotenv').config({ path: '.env.local' });
-
 const nextConfig = {
   reactStrictMode: true,
-  // NEXT_PUBLIC_ variables are automatically made available
-  // by Next.js when defined in .env.local (or other .env files)
-  // and do not need to be explicitly passed here.
-  // The require('dotenv').config() line above ensures they are loaded
-  // during the build process.
+  
+  // Next.js automatically loads .env.local, but we can provide defaults here
+  env: {
+    // These will be available at build time and runtime as process.env.NEXT_PUBLIC_*
+    NEXT_PUBLIC_ORGANIZATION: process.env.NEXT_PUBLIC_ORGANIZATION,
+    NEXT_PUBLIC_TEAMS: process.env.NEXT_PUBLIC_TEAMS
+  }
 }
 
 module.exports = nextConfig

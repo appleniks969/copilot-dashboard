@@ -71,12 +71,14 @@ export class ConfigService {
 
   // Get teams list
   getTeamsList() {
-    // First try from the default config (passed from app.js) 
-    if (this.defaultConfig.TEAMS_LIST && this.defaultConfig.TEAMS_LIST.length > 0) {
-      return this.defaultConfig.TEAMS_LIST;
+    // First try from user preferences
+    const teams = getTeamsList();
+    
+    // Use defaultConfig as backup only if environment returns empty
+    if (!teams || teams.length === 0) {
+      return this.defaultConfig.TEAMS_LIST || [];
     }
     
-    // If that fails, use the direct environment utility as a fallback
-    return getTeamsList();
+    return teams;
   }
 }
