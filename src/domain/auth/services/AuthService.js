@@ -25,8 +25,8 @@ export class AuthService {
       // Create auth credentials
       const credentials = new AuthCredentials(tokenValue);
       
-      // Set token in HTTP service
-      this.httpService.setAuthToken(credentials.toString());
+      // Set token in HTTP service - pass only the token value, not the full bearer string
+      this.httpService.setAuthToken(tokenValue);
       
       // Verify token with a simple API call
       await this.verifyToken();

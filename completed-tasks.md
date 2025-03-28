@@ -71,7 +71,7 @@ The GitHub Copilot Dashboard has been successfully migrated to a Domain-Driven D
 - **Updated Import Paths**: Fixed import paths in FilterBar.js and UserEngagementReport.js to correctly reference the constants file.
 - **Added Support for All Token Types**: Removed token format validation to accept all GitHub token formats.
 - **Simplified Authentication**: Authentication process now accepts any token format that GitHub validates.
-- **Updated Auth UI**: Updated user guidance to indicate that all token formats are accepted.
+- **Fixed Authentication Header Issue**: Fixed an issue where the Authorization header had a duplicated 'Bearer' prefix, causing 401 errors with valid tokens.
 
 ## Future Enhancement Opportunities
 
