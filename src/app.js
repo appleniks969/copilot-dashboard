@@ -26,7 +26,7 @@ import {
   DATE_RANGES, 
   ROI_DEFAULTS,
   TEAMS_LIST
-} from '../config/constants';
+} from './config/constants';
 
 // Create a dependency injection container
 export function setupServices() {

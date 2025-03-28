@@ -3,21 +3,49 @@
  * Application constants and configuration defaults
  */
 
+// Import Next.js config if needed
+import getConfig from 'next/config';
+
+// Get the environment variables from Next.js config
+let publicRuntimeConfig = {};
+try {
+  const nextConfig = getConfig() || {};
+  publicRuntimeConfig = nextConfig.publicRuntimeConfig || {};
+} catch (e) {
+  console.warn('Failed to get Next.js config:', e.message);
+}
+
+// Helper to get an env variable from multiple possible sources
+const getEnvVar = (key) => {
+  // Try in this order: process.env directly, publicRuntimeConfig, then fallback
+  return process.env[key] || publicRuntimeConfig[key] || null;
+};
+
 // API configuration
 export const API_BASE_URL = 'https://api.github.com';
 export const API_VERSION = '2022-11-28';
 
 // Default organization and team
-export const DEFAULT_ORG = process.env.NEXT_PUBLIC_ORGANIZATION || process.env.NEXT_PUBLIC_DEFAULT_ORG || 'your-organization';
-export const DEFAULT_TEAM = process.env.NEXT_PUBLIC_TEAM || process.env.NEXT_PUBLIC_DEFAULT_TEAM || 'engineers';
+export const DEFAULT_ORG = getEnvVar('NEXT_PUBLIC_ORGANIZATION') || getEnvVar('NEXT_PUBLIC_DEFAULT_ORG') || 'your-organization';
+export const DEFAULT_TEAM = getEnvVar('NEXT_PUBLIC_TEAM') || getEnvVar('NEXT_PUBLIC_DEFAULT_TEAM') || 'engineers';
 
 // Get teams list from environment variable (comma-separated)
-export const TEAMS_LIST = process.env.NEXT_PUBLIC_TEAMS ? 
-  process.env.NEXT_PUBLIC_TEAMS.split(',').map(team => team.trim()) : 
+export const TEAMS_LIST = getEnvVar('NEXT_PUBLIC_TEAMS') ? 
+  getEnvVar('NEXT_PUBLIC_TEAMS').split(',').map(team => team.trim()) : 
   [];
 
 // Default selected team (from the teams list if available)
 export const DEFAULT_SELECTED_TEAM = TEAMS_LIST.length > 0 ? TEAMS_LIST[0] : DEFAULT_TEAM;
+
+// Log the environment variables to help debug
+if (typeof window !== 'undefined') {
+  console.log('Environment variables loaded:', {
+    DEFAULT_ORG,
+    DEFAULT_TEAM,
+    TEAMS_LIST,
+    DEFAULT_SELECTED_TEAM,
+  });
+}
 
 // Default date ranges
 export const DATE_RANGES = {
