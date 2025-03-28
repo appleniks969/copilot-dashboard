@@ -1,11 +1,16 @@
+/**
+ * index.js
+ * Main page component that renders either authentication form or dashboard
+ */
+
 import React from 'react';
 import { Box, Heading, Text } from '@chakra-ui/react';
 import Dashboard from '../components/Dashboard';
 import AuthForm from '../components/AuthForm';
-import { useCopilot } from '../lib/CopilotContext';
+import { useAuth } from '../src/presentation/contexts/AuthContext';
 
 export default function Home() {
-  const { authToken } = useCopilot();
+  const { authToken } = useAuth();
 
   return (
     <Box>

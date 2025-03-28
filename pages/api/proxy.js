@@ -1,51 +1,48 @@
+/**
+ * proxy.js
+ * API route for proxying requests to GitHub API to avoid CORS issues
+ */
+
 import axios from 'axios';
 
 export default async function handler(req, res) {
+  // Only allow POST requests (which contain our proxied request details)
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
-  const { url, method = 'GET', data, headers, params } = req.body;
-  
-  if (!url) {
-    return res.status(400).json({ message: 'URL is required' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    console.log(`[API Proxy] Forwarding request to: ${url}`);
-    console.log(`[API Proxy] Headers:`, headers);
-    console.log(`[API Proxy] Params:`, params);
-    
-    // Forward the request to GitHub API
+    // Get request details from the body
+    const { url, method = 'GET', headers = {}, params = {}, data = {} } = req.body;
+
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+
+    // Make the request to the target API
     const response = await axios({
       url,
       method,
-      data,
+      headers,
       params,
-      headers: {
-        ...headers,
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
+      data,
+      validateStatus: () => true, // Don't throw on error status codes
     });
 
-    console.log(`[API Proxy] Response status: ${response.status}`);
-    return res.status(response.status).json(response.data);
+    // Return the response data, status, and headers
+    return res.status(response.status).json({
+      data: response.data,
+      status: response.status,
+      headers: response.headers,
+    });
   } catch (error) {
-    console.error('[API Proxy] Error:', error);
+    console.error('Proxy error:', error);
     
-    const statusCode = error.response?.status || 500;
-    const errorMessage = error.response?.data?.message || 'Something went wrong';
-    
-    if (error.response) {
-      console.error('[API Proxy] Response data:', error.response.data);
-      console.error('[API Proxy] Response status:', error.response.status);
-    }
-    
-    return res.status(statusCode).json({
-      message: errorMessage,
-      error: error.toString(),
-      details: error.response?.data || null
+    // Return error details
+    return res.status(500).json({
+      error: 'Proxy request failed',
+      message: error.message,
+      details: error.toJSON ? error.toJSON() : null,
     });
   }
 }
