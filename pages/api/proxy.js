@@ -19,11 +19,19 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'URL is required' });
     }
 
+    // Add authorization header if AUTH_TOKEN is available (server-side only)
+    const authHeaders = { ...headers };
+    if (process.env.AUTH_TOKEN) {
+      authHeaders.Authorization = `Bearer ${process.env.AUTH_TOKEN}`;
+    } else {
+      console.warn('AUTH_TOKEN not found in environment variables');
+    }
+
     // Make the request to the target API
     const response = await axios({
       url,
       method,
-      headers,
+      headers: authHeaders,
       params,
       data,
       validateStatus: () => true, // Don't throw on error status codes

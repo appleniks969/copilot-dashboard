@@ -13,7 +13,7 @@ const EnvDebugInfo = () => {
     return null;
   }
 
-  const { organization, teamsList } = useConfig();
+  const { organization, teamsList, team } = useConfig();
   
   return (
     <Box fontSize="xs" color="gray.500" p={2} mt={2} bg="gray.50" borderRadius="md">
@@ -22,6 +22,7 @@ const EnvDebugInfo = () => {
         <Badge colorScheme="blue">Organization: {organization || 'Not set'}</Badge>
         <Badge colorScheme="green">Teams: {teamsList?.join(', ') || 'None'}</Badge>
       </HStack>
+      <Text mt={1} fontSize="xs">Current Selection: {team || 'No team selected'}</Text>
     </Box>
   );
 };

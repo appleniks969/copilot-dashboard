@@ -40,6 +40,14 @@ export const ConfigProvider = ({ children, configurationService }) => {
       const teams = configurationService.getTeamsList();
       setTeamsList(teams);
       
+      // If teams are available but no team is selected, default to first team
+      if (teams && teams.length > 0 && !config.team) {
+        const defaultTeam = teams[0];
+        setTeam(defaultTeam);
+        // Also update in the configuration service
+        configurationService.updateTeam(defaultTeam);
+      }
+      
       // Only log in development
       if (process.env.NODE_ENV !== 'production') {
         console.log('Config loaded:', {

@@ -30,9 +30,14 @@ export class ConfigService {
       return preferences.preferredOrg;
     }
 
-    // If no user preference, directly use the environment utility function.
-    // This function reads process.env.NEXT_PUBLIC_ORGANIZATION and has its own fallback.
-    return getOrganization();
+    // Try environment variable
+    const envOrg = getOrganization();
+    if (envOrg) {
+      return envOrg;
+    }
+
+    // Fallback to default config if specified
+    return this.defaultConfig.DEFAULT_ORG || 'your-organization';
   }
 
   // Get default team

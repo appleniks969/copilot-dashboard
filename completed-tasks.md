@@ -72,6 +72,7 @@ The GitHub Copilot Dashboard has been successfully migrated to a Domain-Driven D
 - **Added Support for All Token Types**: Removed token format validation to accept all GitHub token formats.
 - **Simplified Authentication**: Authentication process now accepts any token format that GitHub validates.
 - **Streamlined Environment Variable Handling**: Simplified environment variable access using Next.js best practices, making the code more maintainable.
+- **Fixed Team Selection**: Resolved an issue with team selection in FilterBar by implementing auto-selection of the first team when available.
 
 ## Future Enhancement Opportunities
 

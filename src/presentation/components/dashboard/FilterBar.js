@@ -42,17 +42,27 @@ const FilterBar = () => {
 
   // Initialize selected org with the organization from context or empty string
   const [selectedOrg, setSelectedOrg] = useState(organization || '');
-  const [selectedTeam, setSelectedTeam] = useState(team || '');
+  // Initialize selected team from context, or first team in list if available
+  const [selectedTeam, setSelectedTeam] = useState(
+    team || (teamsList && teamsList.length > 0 ? teamsList[0] : '')
+  );
   
+  // Update state when context values change
   useEffect(() => {
+    // Update organization if changed in context
     if (organization && organization !== selectedOrg) {
       setSelectedOrg(organization);
     }
     
+    // Update team if changed in context or if teams list is loaded and no team is selected
     if (team && team !== selectedTeam) {
       setSelectedTeam(team);
+    } else if (!selectedTeam && teamsList && teamsList.length > 0) {
+      // Auto-select first team if no team is selected
+      setSelectedTeam(teamsList[0]);
+      updateTeam(teamsList[0]); // Also update in context
     }
-  }, [organization, team, selectedOrg, selectedTeam]);
+  }, [organization, team, teamsList, selectedOrg, selectedTeam, updateTeam]);
   
   const handleOrgChange = (e) => {
     setSelectedOrg(e.target.value);
@@ -103,7 +113,11 @@ const FilterBar = () => {
               placeholder="Select organization"
               size="md"
             >
-              <option value={organization || 'your-org'}>{organization || 'Your Organization'}</option>
+              {organization ? (
+                <option value={organization}>{organization}</option>
+              ) : (
+                <option value="">Select an organization...</option>
+              )}
             </Select>
           </FormControl>
 
