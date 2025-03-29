@@ -17,6 +17,7 @@ export class UsageMetrics {
     dataSource = '',
     teamSlug = null,
     rawData = [],
+    rawdata = undefined,  // Handle potential lowercase property variant
     metadata = {}
   }) {
     this.activeUsers = activeUsers;
@@ -29,7 +30,8 @@ export class UsageMetrics {
     this.processedDays = processedDays;
     this.dataSource = dataSource;
     this.teamSlug = teamSlug;
-    this.rawData = rawData;
+    // Always use camelCase property consistently (handle potential lowercase variant)
+    this.rawData = rawData || rawdata || [];
     this.metadata = metadata;
   }
 

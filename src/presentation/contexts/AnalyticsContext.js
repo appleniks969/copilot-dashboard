@@ -68,7 +68,15 @@ export const AnalyticsProvider = ({ children, analyticsService }) => {
             // Use the first successful report for global data
             if (!orgMetrics) {
               setOrgMetrics(result.value);
-              setRawData(result.value.rawData);
+              // Check for case sensitivity in property name
+              const rawDataProperty = result.value.rawData !== undefined ? 'rawData' : 
+                                     (result.value.rawdata !== undefined ? 'rawdata' : null);
+              
+              if (rawDataProperty) {
+                setRawData(result.value[rawDataProperty]);
+              } else {
+                console.warn('No raw data property found in metrics result');
+              }
             }
           } else {
             console.error(`Failed to fetch metrics for ${reportId}:`, result.reason);

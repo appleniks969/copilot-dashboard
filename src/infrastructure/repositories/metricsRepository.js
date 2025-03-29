@@ -33,11 +33,23 @@ export class MetricsRepository {
       const response = await this.httpService.get(endpoint, params);
       
       // Process raw data into domain entity
+      if (response) {
+        // Log the raw response structure for debugging
+        console.log('Raw API response structure:', Object.keys(response));
+      }
+      
       const metrics = this.metricsService.processRawMetricsData(response);
       
       // Add team information
       metrics.teamSlug = team;
       metrics.dataSource = 'team';
+      
+      // Ensure consistent property naming
+      if (metrics.rawData === undefined && metrics.rawdata !== undefined) {
+        console.warn('Fixing inconsistent rawData property naming');
+        metrics.rawData = metrics.rawdata;
+        delete metrics.rawdata;
+      }
       
       // Cache the result
       this.cache.set(cacheKey, metrics);
@@ -69,10 +81,22 @@ export class MetricsRepository {
       const response = await this.httpService.get(endpoint, params);
       
       // Process raw data into domain entity
+      if (response) {
+        // Log the raw response structure for debugging
+        console.log('Raw API response structure:', Object.keys(response));
+      }
+      
       const metrics = this.metricsService.processRawMetricsData(response);
       
       // Add organization information
       metrics.dataSource = 'organization';
+      
+      // Ensure consistent property naming
+      if (metrics.rawData === undefined && metrics.rawdata !== undefined) {
+        console.warn('Fixing inconsistent rawData property naming');
+        metrics.rawData = metrics.rawdata;
+        delete metrics.rawdata;
+      }
       
       // Cache the result
       this.cache.set(cacheKey, metrics);

@@ -11,6 +11,32 @@ export class ReportingService {
       formatCurrency: num => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num)
     };
   }
+  
+  // Helper method to safely get rawData from metrics, handling case sensitivity
+  _getRawData(metrics) {
+    if (!metrics) return [];
+    
+    let rawData = metrics.rawData;
+    
+    // Try lowercase if camelCase not found
+    if (rawData === undefined && metrics.rawdata !== undefined) {
+      console.warn('Using metrics.rawdata instead of metrics.rawData');
+      rawData = metrics.rawdata;
+    }
+    
+    // Ensure we have an array for processing
+    if (!Array.isArray(rawData)) {
+      if (rawData === undefined || rawData === null) {
+        console.warn('Raw data is missing or invalid in metrics object');
+        return [];
+      }
+      
+      // Convert single object to array for consistency
+      return [rawData];
+    }
+    
+    return rawData;
+  }
 
   // Generate user engagement report data
   generateUserEngagementReport(metrics) {
@@ -24,7 +50,8 @@ export class ReportingService {
     }
     
     // Extract the raw data for detailed analysis
-    const rawData = metrics.rawData || [];
+    const rawData = this._getRawData(metrics);
+    
     const processedDays = metrics.processedDays || 0;
     
     // Prepare summary statistics
@@ -75,7 +102,8 @@ export class ReportingService {
     }
     
     // Extract the raw data for detailed analysis
-    const rawData = metrics.rawData || [];
+    const rawData = this._getRawData(metrics);
+    
     const processedDays = metrics.processedDays || 0;
     
     // Prepare summary statistics
@@ -182,14 +210,14 @@ export class ReportingService {
     };
     
     // Aggregate data across all days
-    rawData.forEach(dayData => {
+    (Array.isArray(rawData) ? rawData : []).forEach(dayData => {
       if (!dayData) return;
       
       features.ide_completions.users += dayData.copilot_ide_code_completions?.total_engaged_users || 0;
       features.ide_chat.users += dayData.copilot_ide_chat?.total_engaged_users || 0;
       features.dotcom_chat.users += dayData.copilot_dotcom_chat?.total_engaged_users || 0;
       features.pull_requests.users += dayData.copilot_dotcom_pull_requests?.total_engaged_users || 0;
-    });
+      });
     
     // Average by number of days
     if (processedDays > 0) {
@@ -216,7 +244,7 @@ export class ReportingService {
     };
     
     // Aggregate data across all days
-    rawData.forEach(dayData => {
+    (Array.isArray(rawData) ? rawData : []).forEach(dayData => {
       if (!dayData || !dayData.editors) return;
       
       // Process each editor entry
@@ -269,7 +297,7 @@ export class ReportingService {
     }
     
     // Create daily trend data points
-    return rawData.map(dayData => {
+    return (Array.isArray(rawData) ? rawData : []).map(dayData => {
       if (!dayData || !dayData.date) return null;
       
       return {
@@ -295,14 +323,14 @@ export class ReportingService {
     };
     
     // Aggregate data across all days
-    rawData.forEach(dayData => {
+    (Array.isArray(rawData) ? rawData : []).forEach(dayData => {
       if (!dayData) return;
       
       features['IDE Completions'].users += dayData.copilot_ide_code_completions?.total_engaged_users || 0;
       features['IDE Chat'].users += dayData.copilot_ide_chat?.total_engaged_users || 0;
       features['GitHub.com Chat'].users += dayData.copilot_dotcom_chat?.total_engaged_users || 0;
       features['Pull Request Summaries'].users += dayData.copilot_dotcom_pull_requests?.total_engaged_users || 0;
-    });
+      });
     
     // Average by number of days
     if (processedDays > 0) {
@@ -392,7 +420,7 @@ export class ReportingService {
     }
     
     // Create daily productivity data points
-    return rawData.map(dayData => {
+    return (Array.isArray(rawData) ? rawData : []).map(dayData => {
       if (!dayData || !dayData.date) return null;
       
       // Get code completion metrics
